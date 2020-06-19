@@ -19,3 +19,13 @@ example.bib
 *.gz
 *blx.bib
 *.run.xml
+thesis*.png
+thesis*.svg
+thesis*.html
+thesis*.css
+thesis*.4*
+thesis*.lg
+thesis*.xref
+thesis*.idv
+thesis*.dvi
+thesis*.tmp
