@@ -171,7 +171,7 @@ with-meta,with-open,with-out-str,with-precision,xml-seq,zero?,zipmap
 }
 
 \lstnewenvironment{cljlisting}
-{\either{\singlespacing}{}
+{
 \lstset{language=Clojure,
         }
 }
@@ -179,7 +179,7 @@ with-meta,with-open,with-out-str,with-precision,xml-seq,zero?,zipmap
 
 % this is specifically for big CLJS example in the pldi submission
 \lstnewenvironment{cljlistingnumbered}
-{\either{\singlespacing}{}
+{
 \lstset{language=Clojure,
         numbers=left,
         numbersep=-8pt
@@ -202,7 +202,7 @@ with-meta,with-open,with-out-str,with-precision,xml-seq,zero?,zipmap
 \newcommand\Dsubsection[1]{\either{\subsection{#1}}{\subsubsection{#1}}}
 
 \ifdefined\DISSERTATION
-  \newcommand{\@dotsep}{12}
+  %\newcommand{\@dotsep}{12}
   \usepackage{thmtools}
 
   % commented out to use thmtools instead

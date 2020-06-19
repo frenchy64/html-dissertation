@@ -332,11 +332,7 @@ $$
   }
 \end{figure}
 
-%FIXME remove
-\newpage
-
 {
-\singlespacing
 \begin{lstlisting}[language=ml,mathescape=true]
 type Option[a] = {match : $\ltiPoly{\text{r}}%
                                    {\ltiFn{\text{OptionVisitor[a,r]}}%
@@ -348,7 +344,6 @@ type OptionVisitor[a,r] =
 }
 
 {
-\singlespacing
 \begin{lstlisting}[language=ml,mathescape=true]
 None = $\ltifuntparaminterfaceLHS{\text{s}}%
                                  {\ltiFn{}%
@@ -383,7 +378,6 @@ None = $\ltifuntparaminterfaceLHS{\text{s}}%
 }
 
 {
-\singlespacing
 \begin{lstlisting}[language=ml,mathescape=true]
 Some = $\ltifuntparaminterfaceLHS{\text{t}}{\ltiFn{\text{t}}{\text{Option[t]}}}{\text{y}}$
          {match = $\ltiufun{\text{v}}{\text{v.caseSome(y)}}$}
@@ -398,7 +392,6 @@ Some = $\ltifuntparaminterfaceLHS{\text{t}}{\ltiFn{\text{t}}{\text{Option[t]}}}{
 }
 
 {
-\singlespacing
 \begin{lstlisting}[language=ml,mathescape=true]
 map = $\ltifuntparaminterfaceLHS{\text{c,d}}{\ltiFn{\ltiFn{\text{c}}{\text{d}},\text{Option[c]}}{\text{Option[d]}}}{\text{f,x}}$
         x.match({caseNone = $\ltiufun{}{\text{None()}}$,
@@ -420,7 +413,6 @@ map = $\ltifuntparaminterfaceLHS{\text{c,d}}{\ltiFn{\ltiFn{\text{c}}{\text{d}},\
 }
 
 {
-\singlespacing
 \begin{lstlisting}[language=ml,mathescape=true]
 map($\ltiufun{\text{y}}{\text{1+y}}$, Some(42))
 (* SC annotated *)
@@ -440,7 +432,6 @@ map[$\ltiInferred{\text{Int, Int}}$]($\ltifuninterface{\ltiInferred{\ltiFn{\text
 
 
 {
-\singlespacing
 \begin{lstlisting}[language=ml,mathescape=true]
 id = $\ltifuntparaminterface{\text{a}}{\ltiFn{\text{a}}{\text{a}}}{\text{x}}{\text{x}}$
 
