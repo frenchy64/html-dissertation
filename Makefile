@@ -1,9 +1,8 @@
 all:
-	pdflatex thesis.tex 
-	bibtex thesis
-	pdflatex thesis.tex 
-	bibtex thesis
-	pdflatex thesis.tex 
+	latexmk thesis.tex -pdf
+
+html:
+	htlatex thesis.tex "xhtml,html5,charset=utf-8" " -cunihtf -utf8"
 
 fast:
 	pdflatex thesis.tex 

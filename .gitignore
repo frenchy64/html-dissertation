@@ -29,3 +29,6 @@ thesis*.xref
 thesis*.idv
 thesis*.dvi
 thesis*.tmp
+*_latexmk
+*.fls
+*.bcf
