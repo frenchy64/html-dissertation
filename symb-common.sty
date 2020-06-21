@@ -1,3 +1,4 @@
+\usepackage{mmm}
 \usepackage{esop-common}
 \usepackage{esop-clj-grammar}
 \usepackage{color}
@@ -51,16 +52,16 @@
 \newcommand\ltistackmappingsymbol{\ma{\vdash}}
 \newcommand\ltistackmapping[2]{\ma{{#1} \ltistackmappingsymbol {#2}}}
 \newcommand\ltifunmono[3]{\ma{\ltifuninterface{}{#2}{#3}}}
-\newcommand\ltiufun[2]{\ma{\l (#1) #2}}
+\newcommand\ltiufun[2]{\ma{\lambda (#1) #2}}
 % ID
 \newcommand\ltiufunelabentry[1]{\ma{#1}}
 %% Closure-Tagged Term
 % ElabEntry x E
-\newcommand\ltiufunelab[3]{\ma{\l_{#1} (#2) #3}}
+\newcommand\ltiufunelab[3]{\ma{\lambda_{#1} (#2) #3}}
 % ElabEntry T x E
-\newcommand\ltiufunelabinterface[4]{\ma{\l^{#2}_{#1} (#3) #4}}
+\newcommand\ltiufunelabinterface[4]{\ma{\lambda^{#2}_{#1} (#3) #4}}
 % T ElabEntry x E
-\newcommand\ltifunelab[4]{\ma{\l^{#1}_{#2} #3 . #4}}
+\newcommand\ltifunelab[4]{\ma{\lambda^{#1}_{#2} #3 . #4}}
 \newcommand\ltiappinfix[2]{\ma{#1(#2)}}
 \newcommand\ltiappinst[3]{\ma{\ltiappinfix{#1[#2]}{#3}}}
 \newcommand\ltiapp[2]{\ma{\ltiappinfix{#1}{#2}}}
