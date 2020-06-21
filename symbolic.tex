@@ -99,11 +99,11 @@ For example, the following code creates a Clojure Atom
 \clj{0} to the Atom, and then increments the Atom's value.
 
 {
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 (let [r (atom nil)]
   (reset! r 0)
   (inc @r))
-\end{cljlisting}
+\end{lstlisting}
 }
 
 What type should \clj{r} be assigned? From its initial binding,
@@ -127,21 +127,19 @@ To this end,
 Typed Clojure offers several
 wrappers for common functions where this problem
 is common---the previous example might use the ``typed''
-constructor
-\[
-\clj{(t/atom :- (U nil Int), nil)}.
-\]
+constructor \clj{(t/atom :- (U nil Int), nil)}.
+
 However, the ``hard-to-synthesize arguments'' problem
 is a deeper and more pervasive issue when checking Clojure code.
 We don't have the luxury, desire, nor do we think it would be particularly
 successful to introduce new core idioms to Clojure,
 and so we attempt to solve the this problem algorithmically.
 
-%\begin{cljlisting}
+%\begin{lstlisting}[language=Clojure]
 %(for [i (range 100)]
 %  (map (fn [j] (inc j))
 %       (range i)))
-%\end{cljlisting}
+%\end{lstlisting}
 
 Hosoya and Pierce outline the two main challenges that must be
 addressed to solve the ``hard-to-synthesize arguments'' problem.
@@ -305,17 +303,17 @@ and restrict ourselves to non-recursive monomorphic functions.
 First, let \clj{inc} be of type \clj{[Int -> Int]}.
 The following, then, is well typed because \clj{1} is an \clj{Int}.
 
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 (inc 1)
-\end{cljlisting}
+\end{lstlisting}
 
 Using the standard bidirectional application type rule, \clj{inc} is checked first,
 followed by \clj{1}.
 However, eta-expanding the operator does not behave as nicely.
 
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 ((fn [x] (inc x)) 1)
-\end{cljlisting}
+\end{lstlisting}
 
 Like usual, the standard application rule checks the function first.
 However, there is no annotation for \clj{x}, so the function body will fail
@@ -344,11 +342,11 @@ Take the following illustrative code, identical the previous
 example, except the function is let-bound as \clj{f}.
 
 {
-\lstset{numbers=left,xleftmargin=2em,framexleftmargin=1.5em}
-\begin{cljlisting}
+%\lstset{numbers=left,xleftmargin=2em,framexleftmargin=1.5em}
+\begin{lstlisting}[language=Clojure]
 (let [f (fn [x] (inc x))](*@\label{symbolic:example:let-bound:def-f}@*)
   (f 1))(*@\label{symbolic:example:let-bound:app-f}@*)
-\end{cljlisting}
+\end{lstlisting}
 }
 
 Instead of following the brittle strategy of creating yet-another special rule to delay checking
@@ -391,12 +389,12 @@ and would throw a runtime error.
 \begin{figure}
 {
 \lstset{numbers=left,xleftmargin=2em,framexleftmargin=1.5em}
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 (let [f (let [y 1](*@\label{symbolic:example:closure-red:y-def-site}@*)
           (fn [x] (+ x y)))](*@\label{symbolic:example:closure-red:y-usage}@*)
   (let [y nil](*@\label{symbolic:example:closure-red:y-app-site}@*)
     (f 1)))(*@\label{symbolic:example:closure-red:f-app}@*)
-\end{cljlisting}
+\end{lstlisting}
 }
   \caption{This example evaluates to \clj{2} with lexically scoped variables.}
   \label{symbolic:example:closure-red}
@@ -422,11 +420,11 @@ Instead, with symbolic closures, type checking reduces in a few steps to simply 
 \clj{(inc x)} where \clj{x : Int}.
 
 % more beta reduction
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 (let [f (fn [x] (inc x))
       app (fn [g y] (g y))]
   (app f 1))
-\end{cljlisting}
+\end{lstlisting}
 
 As alluded to in the previous section, we must identify
 all type system components who are responsible for checking symbolic closures,
@@ -439,12 +437,12 @@ However, its first argument will be delayed as a symbolic
 closure---now we must identify who is responsible for checking it.
 
 % using subtyping to check symbolic closures.
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 (ann app-int [[Int -> Int] Int -> Int])
 (defn app-int [f x] (f x))
 ...
 (app-int (fn [x] (inc x)) 1)
-\end{cljlisting}
+\end{lstlisting}
 
 The type signature of \clj{app-int},
 clearly says that its first argument may be called with an \clj{Int}.
@@ -487,12 +485,12 @@ function of two arguments \clj{f} and a number \clj{x}, and
 provides \clj{x} as both arguments to \clj{f}.
 
 % using subtyping to check symbolic closures.
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 (ann curried-app-int [[Int -> [Int -> Int]] Int -> Int])
 (defn curried-app-int [f x] ((f x) x))
 ...
 (curried-app-int (fn [y] (fn [x] (+ x y))) 1)
-\end{cljlisting}
+\end{lstlisting}
 
 The standard application rule will ensure 
 ``the symbolic closure of \clj{(fn [y] (fn [x] (+ x y)))}
@@ -508,12 +506,12 @@ in an even more convoluted way with \clj{app-inc}---by accepting a function
 \clj{f} that it passes both \clj{inc} and its second argument to.
 
 % using subtyping to check symbolic closures.
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 (ann app-inc [[[Int -> Int] Int -> Int] Int -> Int])
 (defn app-inc [f x] (f inc x))
 ...
 (app-inc (fn [g y] (g y)) 1)
-\end{cljlisting}
+\end{lstlisting}
 
 Importantly, \clj{app-inc}'s first argument has a function
 type to the left on an arrow, in particular \clj{[Int -> Int]}.
@@ -555,13 +553,13 @@ would send the \emph{type system} into an infinite loop.
 %TODO much simpler example: ((fn [x] (x x)) (fn [x] (x x)))
 
 % infinite loops
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 (let [Y (fn [f]
           ((fn [g] (fn [x] (f (g g) x)))
            (fn [g] (fn [x] (f (g g) x)))))]
   (let [compute (Y (fn [f x] (inc (f x))))]
     (compute 1)))
-\end{cljlisting}
+\end{lstlisting}
 
 To prevent such loops, we limit the number of symbolic reductions
 done at type-checking time.
@@ -574,10 +572,10 @@ during the 6th reduction of \clj{f} the type system will
 throw an error.
 
 % premature halting
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 (let [f (fn [x] x)]
   (f (f (f (f (f (f 1)))))))
-\end{cljlisting}
+\end{lstlisting}
 
 In simple cases like these, the error message 
 can guide the user to fixing the error.
@@ -630,18 +628,18 @@ by experience.
 %       - I think these are similar reasons to Milner's algorithm
 
 % do we need a story for runtime casting from Any to [Int -> Int]?
-%\begin{cljlisting}
+%\begin{lstlisting}[language=Clojure]
 %(ann dynapp-int [Any Int -> Int])
 %...
 %(dynapp-int (fn [x] (inc x)) 1)
-%\end{cljlisting}
+%\end{lstlisting}
 
 % no idea what to do with negation function types 
-%\begin{cljlisting}
+%\begin{lstlisting}[language=Clojure]
 %(ann app-int [(U [Int -> Int] (I Any (Not [Int -> Int]))) Int -> Int])
 %...
 %(app-int (fn [x] (inc x)) 1)
-%\end{cljlisting}
+%\end{lstlisting}
 
 
 \section{Formal model}

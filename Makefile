@@ -2,7 +2,7 @@ all:
 	latexmk thesis.tex -pdf
 
 html:
-	htlatex thesis.tex "xhtml,html5,charset=utf-8" " -cunihtf -utf8"
+	make4ht -u thesis.tex -c html-config.cfg
 
 fast:
 	pdflatex thesis.tex 

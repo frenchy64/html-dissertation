@@ -115,7 +115,6 @@ with-meta,with-open,with-out-str,with-precision,xml-seq,zero?,zipmap
   upquote=true,
   language=Clojure,                % choose the language of the code
   columns=fixed,
-  basewidth=.5em,
   basicstyle=\ttfamily,       % the size of the fonts that are used for the code
   %numbers=left,                   % where to put the line-numbers
   %numberstyle=\small\ttfamily,      % the size of the fonts that are used for the line-numbers
@@ -170,6 +169,10 @@ with-meta,with-open,with-out-str,with-precision,xml-seq,zero?,zipmap
   stringstyle=\color{stringgray}\textit,     % string literal style
 }
 
+% Note: this does not seem compatible with tex4ht. It
+% inserts an extra line when line numbers are on and
+% often deletes newlines. use \begin{lstlisting}[language=Clojure]
+% instead.
 \lstnewenvironment{cljlisting}
 {
 \lstset{language=Clojure,
@@ -236,7 +239,7 @@ with-meta,with-open,with-out-str,with-precision,xml-seq,zero?,zipmap
 \usepackage{booktabs}
 \newcommand{\tabitem}{~~\llap{\textbullet}~~}
 
-\newcommand{\clj}[1]{\text{\lstinline[language=Clojure]{#1}}}
+\newcommand{\clj}[1]{\lstinline[language=Clojure]{#1}}
 \newcommand{\js}[1]{\lstinline[language=JavaScript]{#1}}
 \newcommand{\java}[1]{\lstinline[language=Java]{#1}}
 \newcommand{\rkt}[1]{\lstinline[language=Lisp]{#1}}
