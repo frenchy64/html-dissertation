@@ -161,7 +161,10 @@
 % nonterminal names default to roman, even in theorems.
 \def\nt#1{\hbox{$\langle\hbox{\rm #1\/}\rangle$}}
 \def\term#1{\hbox{\tt #1}}      % I usually put \, before and after the hbox.
-\def\alt{~~\vert~~}
+%\def\alt{~~\vert~~}
+% June 21st 2020: use escaped spaces instead for (much) better
+% tex4ht compatibility - Ambrose
+\def\alt{\ \ \vert\ \ }
 
 \def\lparen{\term{(}}           % deprecated, because it breaks paren matching.
 \def\rparen{\term{)}}           % likewise
