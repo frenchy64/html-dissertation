@@ -2,7 +2,8 @@ all:
 	latexmk thesis.tex -pdf
 
 html:
-	make4ht -u thesis.tex -c html-config.cfg
+	# svg generation https://tex.stackexchange.com/a/399458
+	make4ht -u thesis.tex -c html-config.cfg "svg"
 
 fast:
 	pdflatex thesis.tex 

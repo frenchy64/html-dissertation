@@ -3142,7 +3142,7 @@ For our example, the type of \ltiE{} flows to \text{List[a]},
 which informs the symbolic closure of its input, and then \text{List[b]}
 is derived from the output of the symbolic closure.
 
-\[
+$$
 \begin{array}{c}
 \ltiapp{\text{map}}{\ltiufun{{\tikz[overlay,remember picture] \node [] (b2) {};}\ltivar{}}
                              {\ltiF{}}{\tikz[overlay,remember picture] \node [] (c0) {};},
@@ -3175,7 +3175,7 @@ is derived from the output of the symbolic closure.
   \draw[red,->,bend right=-45](Start2.east) to (End2.north east);
 \end{tikzpicture} 
 \end{array}
-\]
+$$
 
 Formalizing this intuition into a type-argument synthesis algorithm is work-in-progress.
 
