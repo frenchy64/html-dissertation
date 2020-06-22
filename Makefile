@@ -3,7 +3,13 @@ all:
 
 html:
 	# svg generation https://tex.stackexchange.com/a/399458
+	make4ht -um draft thesis.tex -c html-config.cfg
+	biber thesis
 	make4ht -u thesis.tex -c html-config.cfg "svg"
+
+mathjax:
+	# https://tex.stackexchange.com/a/68962
+	make4ht -u thesis.tex -c mathjax.cfg "svg"
 
 fast:
 	pdflatex thesis.tex 
