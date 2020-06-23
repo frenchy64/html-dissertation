@@ -424,14 +424,14 @@ provide the following strongly-normalizing term is not typable in System F,
 which we write in Clojure and refer to as \GRterm.
 
 %separate to preserve spacing
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 (let [I (fn [a] a)
       K (fn [b] (fn [c] b))
       D (fn [d] (d d))]
   ((fn [x] (fn [y] ((y (x I))
                     (x K))))
    D))
-\end{cljlisting}
+\end{lstlisting}
 %separate to preserve spacing
 
 Palsberg~\cite{Palsberg:1995:CAC:200994.201001}
@@ -541,11 +541,11 @@ Then we inspected \GRclosure, and noticed \clj{y}
 must have shape \clj{[? -> [? -> ?]]} based on its usage.
 Incorporating that information results in our first interesting query result.
 
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 (tc [[? -> [? -> ?]] -> ?]
     GR)
 ;=> [[Any -> [Any -> Nothing]] -> Nothing]
-\end{cljlisting}
+\end{lstlisting}
 
 This was calculated by observing a result type of \clj{Nothing}
 from the application of \GRclosure to an argument of type \clj{[Any -> [Any -> Nothing]]}
@@ -553,7 +553,7 @@ from the application of \GRclosure to an argument of type \clj{[Any -> [Any -> N
 in covariant/contravariant positions, respectively, with respect to the relevant part of the prototype).
 We can find other interesting types \GRclosure inhabits by varying the query.
 
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 (tc [[? -> [? -> Int]] -> ?]
     GR)
 ;=> [[Any -> [Any -> Int]] -> Int]
@@ -561,22 +561,22 @@ We can find other interesting types \GRclosure inhabits by varying the query.
 (tc (All [a] [[? -> [? -> a]] -> ?])
     GR)
 ;=> (All [a] [[Any -> [Any -> a]] -> a])
-\end{cljlisting}
+\end{lstlisting}
 
 With the last query, we stumble on how to use \GRterm as a glorified identity function.
 We can verify this by evaluating a few terms.
 
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 (GR (fn [_] (fn [_] 42))) ;=> 42
 (GR (fn [_] (fn [_] 24))) ;=> 24
-\end{cljlisting}
+\end{lstlisting}
 
 We can also synthesize the types of these calls.
 
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 (tc ? (GR (fn [_] (fn [_] 42))))
 ;=> Int
-\end{cljlisting}
+\end{lstlisting}
 
 The original use case of symbolic closures is to type check
 top-level functions against provided types,
@@ -585,12 +585,12 @@ The following (extreme) example shows how checking the definition
 of a simple identity function can be thwarted, and how symbolic closures
 can make checking the definition of functions much more flexible.
 
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 (tc (All [a] [a -> a])
     (fn [z]
       (GR (fn [_] (fn [_] z)))))
 ;=> (All [a] [a -> a])
-\end{cljlisting}
+\end{lstlisting}
 
 This illustrates the promise of symbolic closures to treat previously untypable terms
 as ``black-boxes'' during type checking, especially in a setting where top-level
@@ -626,9 +626,9 @@ following symbolic closure type (using their labelled lambda syntax)
 $\ltiClosure{\ltiEnv{}}{\l^3 u. u}$,
 where $\ltiEnv{} = \{f : \ltiClosure{\{\}}{\l^4 v. v}, x : \text{Int}\}$.
 
-%\begin{cljlisting}
+%\begin{lstlisting}[language=Clojure]
 %(tc ? ((fn [f] ((fn [x] (f (fn [u] u))) (f 0))) (fn [v] v)))
-%\end{cljlisting}
+%\end{lstlisting}
 
 
 \paragraph{Hindley-Milner and Let-polymorphism}
@@ -676,30 +676,30 @@ It follows the following pattern, which is similar to the previous benchmark, ex
 intermediate values are let-bound.
 
 \begin{minipage}[t]{0.3\linewidth}
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 (let [x0 1
       x1 (P x0)]
   x1)
-\end{cljlisting}
+\end{lstlisting}
 \end{minipage}
 %
 \begin{minipage}[t]{0.3\linewidth}
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 (let [x0 1
       x1 (P x0)
       x2 (P x1)]
   x2)
-\end{cljlisting}
+\end{lstlisting}
 \end{minipage}
 %
 \begin{minipage}[t]{0.3\linewidth}
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 (let [x0 1
       x1 (P x0)
       x2 (P x1)
       x3 (P x2)]
   x3)
-\end{cljlisting}
+\end{lstlisting}
 \end{minipage}
 
 Unlike ML, we find that symbolic closures are rather sensitive to whether $P$
@@ -718,12 +718,12 @@ because the exponential growth happens by duplicating symbolic closure types.
 Each $P_z$ term comes from a different copy of $P$, in particular
 the $P_z$ term of symbolic closure type \clj{Pci} originates from the $P$ occurring on the right-hand-side of \clj{xi}.
 
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 Pc1 = {x0 Int,                         x Int}@Pz
 Pc2 = {x0 Int, x1 Pc1,                 x Pc1}@Pz
 Pc3 = {x0 Int, x1 Pc1, x2 Pc2,         x Pc2}@Pz
 Pc4 = {x0 Int, x1 Pc1, x2 Pc2, x3 Pc3, x Pc3}@Pz
-\end{cljlisting}
+\end{lstlisting}
 
 Example 3.5 of~\cite{kanellakis1989polymorphic} gives a series of terms whose ML principal
 type is doubly-exponential in the size of the term,
@@ -731,27 +731,27 @@ reduced to exponential when converted to a directed acyclic graph.
 The pattern is below, which, for $i>1$ and $j=i-1$, binds \clj{xi} to \clj{(fn [y] (xj (xj y)))}.
 
 \begin{minipage}[t]{0.31\linewidth}
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 (let [x1 (fn [x] (P x))
       x2 (fn [y]
            (x1 (x1 y)))]
   (x2 1))
-\end{cljlisting}
+\end{lstlisting}
 \end{minipage}
 %
 \begin{minipage}[t]{0.31\linewidth}
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 (let [x1 (fn [x] (P x))
       x2 (fn [y]
            (x1 (x1 y)))
       x3 (fn [y]
            (x2 (x2 y)))]
   (x3 1))
-\end{cljlisting}
+\end{lstlisting}
 \end{minipage}
 %
 \begin{minipage}[t]{0.31\linewidth}
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 (let [x1 (fn [x] (P x))
       x2 (fn [y]
            (x1 (x1 y)))
@@ -760,7 +760,7 @@ The pattern is below, which, for $i>1$ and $j=i-1$, binds \clj{xi} to \clj{(fn [
       x4 (fn [y]
            (x3 (x3 y)))]
   (x4 1))
-\end{cljlisting}
+\end{lstlisting}
 \end{minipage}
 
 The symbolic closure type for these terms grows exponentially in size, again because 
@@ -768,15 +768,14 @@ the number of reachable closures grows exponentially. However, each symbolic clo
 is distinct, so no sharing is possible. The term ending in \clj{xi}
 is given type \clj{Pci}, below.
 
-\begin{cljlisting}
+\begin{lstlisting}[language=Clojure]
 Pc1 = {x Int}                                      @Pz
 Pc2 = {x Pc1}                                      @Pz
 Pc3 = {x {x Pc2}@Pz}                               @Pz
 Pc4 = {x {x {x {x {x Pc3}@Pz}@Pz}@Pz}@Pz}          @Pz
 Pc5 = {x {x {x {x {x {x {x {x {x {x {x {x Pc4}
        @Pz}@Pz}@Pz}@Pz}@Pz}@Pz}@Pz}@Pz}@Pz}@Pz}@Pz}@Pz
-                                        
-\end{cljlisting}
+\end{lstlisting}
 
 % https://link.springer.com/content/pdf/10.1007%2FBFb0032745.pdf
 % Type-Directed Flow Analysis for Typed Intermediate Languages - Suresh Jagannathan, Stephen Week~s, and Andrew Wright 
