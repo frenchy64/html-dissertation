@@ -106,7 +106,7 @@
 \newcommand\ValueTrue[0]{(\ma{\Valueliteral \true})}
 \newcommand\ValueBool[0]{(\ma{\Valueliteral \bool{}})}
 \newcommand\ValueClass[0]{(\ma{\Valueliteral \class{}})}
-\newcommand\ValueKw[0]{(\ma{\Valueliteral \k{}})}
+\newcommand\ValueKw[0]{(\ma{\Valueliteral \kw{}})}
 \newcommand\ValueStr[0]{(\ma{\Valueliteral \str{}})}
 \newcommand\Valkw[1]{\ma{\Value{\makekw{#1}}}}
 \newmeta\singletonmeta{l}
@@ -1085,15 +1085,15 @@
 { 
   \judgementtworewrite {\propenv{}} {\e{}} {\HMapgeneric {\mandatory{}} {\absent}} {\assocexp {\ep{}} {\ep{k}} {\ep{v}}}
   \ \ \ %\\
-  \judgementtworewrite {\propenv{}} {\e{k}} {\Value{\k{}}} {\ep{k}}
+  \judgementtworewrite {\propenv{}} {\e{k}} {\Value{\kw{}}} {\ep{k}}
   \ \ \ %\\
   \judgementtworewrite {\propenv{}} {\e{v}} {\t{}} {\ep{v}}
    \ \ \ %\\
-  {\k{}} \not\in {\absent{}}
+  {\kw{}} \not\in {\absent{}}
 }
 { \judgementrewrite {\propenv{}} 
              {\assocexp {\e{}} {\e{k}} {\e{v}}}
-                       {\HMapgeneric {\extendmandatoryset {\mandatory{}}{\k{}}{\t{}}} {\absent}}
+                       {\HMapgeneric {\extendmandatoryset {\mandatory{}}{\kw{}}{\t{}}} {\absent}}
              {\filterset {\topprop{}} {\botprop{}}}
              {\emptyobject{}}
              {\assocexp {\ep{}} {\ep{k}} {\ep{v}}}
@@ -1110,7 +1110,7 @@
   \ \ \ %\\
   \judgementtworewrite {\propenv{}} {\e{k}} {\Value {k}} {\ep{k}}
   \ \ \ %\\
-             {\overrightarrow{\inmandatory{\k{}}{\t{}}{\mandatory{}}}}^i
+             {\overrightarrow{\inmandatory{\kw{}}{\t{}}{\mandatory{}}}}^i
        }
 { \judgementrewrite {\propenv{}} {\getexp {\e{}} {\e{k}}} {\Unionsplice {{\overrightarrow {\t{}}}^i}}
              {\filterset {\topprop{}} {\topprop{}}}
@@ -1130,7 +1130,7 @@
          \\
   \judgementtworewrite {\propenv{}} {\e{k}} {\Value {k}} {\ep{k}}
              \\
-             {\inabsent{\k{}}{\absent{}}}
+             {\inabsent{\kw{}}{\absent{}}}
        }
 { \judgementrewrite {\propenv{}} {\getexp {\e{}} {\e{k}}}
                                     {\Nil{}}
@@ -1152,9 +1152,9 @@
          \\
   \judgementtworewrite {\propenv{}} {\e{k}} {\Value {k}} {\ep{k}}
              \\
-             {\notinmandatory{\k{}}{\t{}}{\mandatory{}}}
+             {\notinmandatory{\kw{}}{\t{}}{\mandatory{}}}
              \\
-             {\notinabsent{\k{}}{\absent{}}}
+             {\notinabsent{\kw{}}{\absent{}}}
        }
 { \judgementrewrite {\propenv{}} {\getexp {\e{}} {\e{k}}}
                                     {\Top{}}
@@ -1181,7 +1181,7 @@
 \infer [T-Kw]
 {}
 { \judgementselfrewrite {\propenv{}} 
-      {\k{}} {\ValueKw}
+      {\kw{}} {\ValueKw}
       {\filterset {\topprop{}}{\botprop{}}}
       {\emptyobject{}} 
     }
@@ -1198,7 +1198,7 @@
 }
 
 \newcommand\pathelemsyntax[0]{
-  \pesyntax{}   &::=& \trdiff{\classpe{}} \alt \trdiff{\keype{\k{}}}
+  \pesyntax{}   &::=& \trdiff{\classpe{}} \alt \trdiff{\keype{\kw{}}}
                 &\mbox{Path elements}
 }
 
@@ -1249,7 +1249,7 @@
 }
 
 \newcommand\singletonallsyntax[0]{
-  \singletonmeta{}     &::=& \k{} 
+  \singletonmeta{}     &::=& \kw{} 
                              \alt {\trdiff{\class{}}}
                              \alt {\trdiff{\nil}}
                              \alt \bool{}
@@ -1537,7 +1537,7 @@ $$
 {\opsem {\openv{}}
         {\e{}} {\mapval{}}
         \\
- \opsem {\openv{}} {\e{k}} {\k{}}
+ \opsem {\openv{}} {\e{k}} {\kw{}}
  \\\\
  \opsem {\openv{}} {\e{v}} {\v{v}}
 }
@@ -1545,7 +1545,7 @@ $$
  \opsem {\openv{}}
         {\assocexp {\e{}} {\e{k}} {\e{v}}} 
         {\extendmap{\mapval{}}
-          {\k{}}{\v{v}}}
+          {\kw{}}{\v{v}}}
                 }
               }
 
@@ -1556,15 +1556,15 @@ $$
         {\e{}} {\mapval{}}
          \\
  \opsem {\openv{}}
-        {\ep{}} {\k{}}
+        {\ep{}} {\kw{}}
         \\\\
- \keyinmap{\k{}}{\mapval{}}
+ \keyinmap{\kw{}}{\mapval{}}
 }
 {
  \opsem {\openv{}}
         {\getexp {\e{}} {\ep{}}}
         {\getmap{\mapval{}}
-          {\k{}}}
+          {\kw{}}}
 }
 }
 
@@ -1574,9 +1574,9 @@ $$
         {\e{}} {\mapval{}}
         \\\\
  \opsem {\openv{}}
-        {\ep{}} {\k{}}
+        {\ep{}} {\kw{}}
         \\
- \keynotinmap{\k{}}{\mapval{}}
+ \keynotinmap{\kw{}}{\mapval{}}
 }
 {
  \opsem {\openv{}}
@@ -1759,7 +1759,7 @@ $$
 }
 {\issubtypein {} 
   {\HMapcwithabsent {\mandatory{}}{\absentp{}}}
-  {\HMapp {{\mandatorysetoverright{\k{}}{\t{}}}^i} {\absent{}}}
+  {\HMapp {{\mandatorysetoverright{\kw{}}{\t{}}}^i} {\absent{}}}
                }
 }
 
@@ -1770,7 +1770,7 @@ $$
   {\absent{1}} \supseteq {\absent{2}}
 }
 {\issubtypein {} {\HMapgeneric {\mandatory{}} {\absent{1}}}
-  {\HMapgeneric {{\mandatorysetoverright{\k{}}{\t{}}}^i} {\absent{2}}}
+  {\HMapgeneric {{\mandatorysetoverright{\kw{}}{\t{}}}^i} {\absent{2}}}
                }
              }
 
@@ -1884,9 +1884,9 @@ $$
 
 % HMap syntax auxiliary 
 \newcommand\auxhmapsyntax[0]{
-  \mandatory{} &::=& \mandatorysetoverright{\k{}}{\t{}}
+  \mandatory{} &::=& \mandatorysetoverright{\kw{}}{\t{}}
                 &\mbox{HMap mandatory entries} \\
-  \absent{} &::=& \absentoverright{\k{}}
+  \absent{} &::=& \absentoverright{\kw{}}
                 &\mbox{HMap absent entries} \\
   \completenessmeta{} &::=& {\complete{}} \alt {\partial{}}
                 &\mbox{HMap completeness tags}
@@ -2524,65 +2524,65 @@ $$
 
 % keype
 \\
-\update{\HMapgeneric {\mandatory{}} {\absent{}}}{\propisnotmeta{}}{\destructpath {\pathelem{}} {\keype{\k{}}}}
+\update{\HMapgeneric {\mandatory{}} {\absent{}}}{\propisnotmeta{}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
 &=&
-{\HMapgeneric {\extendmandatoryset{\mandatory{}}{\k{}}{\update{\t{}}{\propisnotmeta{}}{\pathelem{}}}}{\absent{}}}
+{\HMapgeneric {\extendmandatoryset{\mandatory{}}{\kw{}}{\update{\t{}}{\propisnotmeta{}}{\pathelem{}}}}{\absent{}}}
 \\
-&& \text{if}\ {\inmandatory{\k{}}{\t{}}{\mandatory{}}}
+&& \text{if}\ {\inmandatory{\kw{}}{\t{}}{\mandatory{}}}
 %& Present Key
 
 \\
-\update{\HMapgeneric {\mandatory{}} {\absent{}}}{\propisnotmeta{}}{\destructpath {\pathelem{}} {\keype{\k{}}}}
+\update{\HMapgeneric {\mandatory{}} {\absent{}}}{\propisnotmeta{}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
 &=&
 {\Bottom{}}
-\ \ \text{if}\ {\notsubtypein {} {\Nil{}} {\propisnotmeta{}}}\ \text{and}\ {\inabsent{\k{}}{\absent{}}}
+\ \ \text{if}\ {\notsubtypein {} {\Nil{}} {\propisnotmeta{}}}\ \text{and}\ {\inabsent{\kw{}}{\absent{}}}
 
 % both these cases are summarised by the above, which uses negation subtyping
 %\\
-%\update{\HMapgeneric {\mandatory{}} {\absent{}}}{\t{}}{\destructpath {\pathelem{}} {\keype{\k{}}}}
+%\update{\HMapgeneric {\mandatory{}} {\absent{}}}{\t{}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
 %&=&
 %{\Bottom{}}
-%& \text{if}\ {\notsubtypein {} {\Nil{}} {\t{}}}\ \text{and}\ {\inabsent{\k{}}{\absent{}}}
+%& \text{if}\ {\notsubtypein {} {\Nil{}} {\t{}}}\ \text{and}\ {\inabsent{\kw{}}{\absent{}}}
 %%& Bad absent +
 %\\
-%\update{\HMapgeneric {\mandatory{}} {\absent{}}}{\nottype{\t{}}}{\destructpath {\pathelem{}} {\keype{\k{}}}}
+%\update{\HMapgeneric {\mandatory{}} {\absent{}}}{\nottype{\t{}}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
 %&=&
 %{\Bottom{}}
-%& \text{if}\ {\issubtypein {} {\Nil{}} {\t{}}}\ \text{and}\ {\inabsent{\k{}}{\absent{}}}
+%& \text{if}\ {\issubtypein {} {\Nil{}} {\t{}}}\ \text{and}\ {\inabsent{\kw{}}{\absent{}}}
 %%& Bad absent -
 
 % this rule doesn't do much, turned into default rule
 %\\
-%\update{\HMapgeneric {\mandatory{}} {\absent{}}}{\propisnotmeta{}}{\destructpath {\pathelem{}} {\keype{\k{}}}}
+%\update{\HMapgeneric {\mandatory{}} {\absent{}}}{\propisnotmeta{}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
 %&=&
 %{\HMapgeneric {\mandatory{}} {\absent{}}}
-%& \text{if}\ {\inabsent{\k{}}{\absent{}}}
+%& \text{if}\ {\inabsent{\kw{}}{\absent{}}}
 %%& Consistent absent
 
 \\
-\update{\HMapp {\mandatory{}} {\absent{}}}{\t{}}{\destructpath {\pathelem{}} {\keype{\k{}}}}
+\update{\HMapp {\mandatory{}} {\absent{}}}{\t{}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
 &=&
-(\cup\ {\HMapp {\extendmandatoryset {\mandatory{}} {\k{}}
+(\cup\ {\HMapp {\extendmandatoryset {\mandatory{}} {\kw{}}
                                      {\t{}}}
                 {\absent{}}}
           \\&&\ \ \ \ \, \,
-        {\HMapp {\mandatory{}} {\extendabsentset{\absent{}}{\k{}}}})
+        {\HMapp {\mandatory{}} {\extendabsentset{\absent{}}{\kw{}}}})
         \\
-&& \text{if}\ {\issubtypein {} {\Nil{}} {\t{}}},\ {\notinmandatory{\k{}}{\s{}}{\mandatory{}}}\ \text{and}\ {\notinabsent{\k{}}{\absent{}}}
+&& \text{if}\ {\issubtypein {} {\Nil{}} {\t{}}},\ {\notinmandatory{\kw{}}{\s{}}{\mandatory{}}}\ \text{and}\ {\notinabsent{\kw{}}{\absent{}}}
 \\
-\update{\HMapp {\mandatory{}} {\absent{}}}{\propisnotmeta{}}{\destructpath {\pathelem{}} {\keype{\k{}}}}
+\update{\HMapp {\mandatory{}} {\absent{}}}{\propisnotmeta{}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
 &=&
-{\HMapp {\extendmandatoryset {\mandatory{}} {\k{}}{\update{\Top}{\propisnotmeta{}}{\pathelem{}}}} {\absent{}}}
+{\HMapp {\extendmandatoryset {\mandatory{}} {\kw{}}{\update{\Top}{\propisnotmeta{}}{\pathelem{}}}} {\absent{}}}
 \\
 && 
-\text{if}\ {\notsubtypein {} {\Nil{}} {\propisnotmeta{}}},\ {\notinmandatory{\k{}}{\s{}}{\mandatory{}}}\ \text{and}\ {\notinabsent{\k{}}{\absent{}}}
+\text{if}\ {\notsubtypein {} {\Nil{}} {\propisnotmeta{}}},\ {\notinmandatory{\kw{}}{\s{}}{\mandatory{}}}\ \text{and}\ {\notinabsent{\kw{}}{\absent{}}}
 
 %\\
-%\update{\HMapp {\mandatory{}} {\absent{}}}{\propisnotmeta{}}{\destructpath {\pathelem{}} {\keype{\k{}}}}
+%\update{\HMapp {\mandatory{}} {\absent{}}}{\propisnotmeta{}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
 %&=&
-%{\HMapp {\extendmandatoryset {\mandatory{}} {\k{}}{\update{\Top}{\propisnotmeta{}}{\pathelem{}}}} {\absent{}}}
+%{\HMapp {\extendmandatoryset {\mandatory{}} {\kw{}}{\update{\Top}{\propisnotmeta{}}{\pathelem{}}}} {\absent{}}}
 \\
-\update{\t{}}{\propisnotmeta{}}{\destructpath {\pathelem{}} {\keype{\k{}}}}
+\update{\t{}}{\propisnotmeta{}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
 &=&
 {\t{}}
 %& Consistent absent
@@ -2664,7 +2664,7 @@ $$
 \constantopsem{\classconst{}}{\closure {\openv{}} {\abs {\x{}} {\t{}} {\e{}}}} &=& \IFn{}\\
 \constantopsem{\classconst{}}{\multi {\v{d}} {\disptable{}}} &=& \PMulti{}\\
 \constantopsem{\classconst{}}{\mapval{}} &=& \HMapInstance{}\\
-\constantopsem{\classconst{}}{\k{}} &=& \Keyword{}\\
+\constantopsem{\classconst{}}{\kw{}} &=& \Keyword{}\\
 \constantopsem{\classconst{}}{\num{}} &=& \Number{}
 \end{array}
 \begin{array}{lllr}

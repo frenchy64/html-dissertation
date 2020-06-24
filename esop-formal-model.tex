@@ -25,7 +25,7 @@ include variables \x{}, values \v{},
 applications, abstractions, conditionals, and let expressions.
 All binding forms introduce fresh variables---a subtle but important point since our type environments
 are not simply dictionaries.
-Values include booleans \bool{}, \nil{}, class literals {\class{}}, keywords \k{},
+Values include booleans \bool{}, \nil{}, class literals {\class{}}, keywords \kw{},
 integers {\nat{}},
 constants {\const{}}, and strings \str{}. Lexical closures {\closure {\openv{}} {\abs {\x{}} {\t{}} {\e{}}}}
 close value environments \openv{}---which map bindings to values---over functions.
@@ -1049,8 +1049,8 @@ rules that rewrite to reflective calls.
 %We instead want to reason about HMap lookups and calls to \classconst{}.
 %
 %\paragraph{Key path element} We introduce our first path element
-%{\keype{\k{}}}, which represents the operation of looking up
-%a key \k{}.
+%{\keype{\kw{}}}, which represents the operation of looking up
+%a key \kw{}.
 %We directly relate this to our typing rule T-GetHMap
 %(\figref{main:figure:hmapsyntax}) by
 %checking the then branch of the first conditional test is checked in 
@@ -1424,7 +1424,7 @@ and applies it to the original argument for the final result.
     \t{} &::=& \ldots \alt {\HMapgeneric {\mandatory{}} {\absent{}}}
     &\mbox{Types} \\
     \auxhmapsyntax{}\\
-%    \pesyntax{}   &::=& \ldots \alt {\keype{\k{}}}
+%    \pesyntax{}   &::=& \ldots \alt {\keype{\kw{}}}
 %                  &\mbox{Path Elements}
   \end{altgrammar}
   $$
@@ -1495,8 +1495,8 @@ Keys cannot be both present and absent.
 %\HMapcwithabsent{\mandatory{}}{\absent{}} is abbreviated to \HMapc{\mandatory{}}. 
 
 The metavariable \mapval{}
-ranges over the runtime value of maps {\curlymapvaloverright{\k{}}{\v{}}},
-usually written {\curlymapvaloverrightnoarrow{\k{}}{\v{}}}.
+ranges over the runtime value of maps {\curlymapvaloverright{\kw{}}{\v{}}},
+usually written {\curlymapvaloverrightnoarrow{\kw{}}{\v{}}}.
 We %do not model keywords as functions,
 only provide syntax for the empty map literal,
 however when convenient we abbreviate non-empty map literals
@@ -1561,7 +1561,7 @@ $
         ,{\mandatoryentrynoarrow{\Valkw{au}}{\String}}}}
 $,
 a complete map.
-T-AssocHMap also enforces ${\k{}} \not\in {\absent{}}$ to prevent badly formed types.
+T-AssocHMap also enforces ${\kw{}} \not\in {\absent{}}$ to prevent badly formed types.
 
 %for cases like \egref{example:desserts-on-meal}
 %where every element in the union
@@ -1583,7 +1583,7 @@ as long as they agree on the mandatory entries of the partial map via subtyping 
 %The objects in the T-Get rules are more complicated than those in T-Local---the 
 %next section discusses this in detail.
 %Finally T-AssocHMap extends an HMap with a mandatory entry while preserving completeness
-%and absent entries, and enforcing ${\k{}} \not\in {\absent{}}$ to prevent badly
+%and absent entries, and enforcing ${\kw{}} \not\in {\absent{}}$ to prevent badly
 %formed types.
 
 The semantics for \getliteral{} and \assocliteral{} are straightforward.
@@ -1651,7 +1651,7 @@ Since {\Order} is a union of HMaps, we structurally recur on the first case of \
 (\figref{main:figure:update}),
 which preserves \pathelem{}.
 Each initial recursion hits the first HMap case, since there is some \t{} such that
-{\inmandatory{\k{}}{\t{}}{\mandatory{}}} and 
+{\inmandatory{\kw{}}{\t{}}{\mandatory{}}} and 
 \completenessmeta{} accepts partial maps \partial{}.
 
 To demonstrate,
@@ -1682,10 +1682,10 @@ path element.
 We describe the other \updateliteral{} cases.
 The first \classpe{} case updates
 to \class{} if \classconst{} returns \Value{\class{}}.
-The second \keype{\k{}} case detects contradictions in absent
+The second \keype{\kw{}} case detects contradictions in absent
 keys. % not overlapping with \Nil{}.
-The third \keype{\k{}} case updates unknown entries to be mapped to \t{} or absent.
-The fourth \keype{\k{}} case updates unknown entries to be \emph{present}
+The third \keype{\kw{}} case updates unknown entries to be mapped to \t{} or absent.
+The fourth \keype{\kw{}} case updates unknown entries to be \emph{present}
 when they do not overlap with \Nil{}.
 
 %$
