@@ -176,7 +176,7 @@
 \newmeta\xp{x{'}}                   % not sure if \x is reserved...
 \newmeta\y{y}
 \newmeta\z{z}
-\newmeta\v{v}
+\newmeta\val{v}
 \newmeta\vp{v'}
 \newmeta\vpp{v''}
 \newmeta\class{C}
@@ -249,7 +249,7 @@
 \newcommand\defexp[2]{(\ma{\defliteral{}\ #1\ #2})}
 \newcommand\wrong[0]{\ma{wrong}}
 \newcommand\errorval[1]{\ma{\metafunctionfont{err}}}
-\newcommand\errorvalv[0]{\errorval{\v{}}}
+\newcommand\errorvalv[0]{\errorval{\val{}}}
 \newcommand\reflerror[0]{\errorval{refl}}
 \newcommand\mmerror[0]{\errorval{mm}}
 \newcommand\rtvector[1]{[{#1}]}
@@ -1245,7 +1245,7 @@
 \newcommand\TInstance[0]{
 \infer [T-Instance]
 {}
-{ \judgement {\propenv{}} {\classvalue{\classhint{}} {\overrightarrow {\classfieldpair{\fld{}} {\v{}}}}}{\class{}}{\filterset{\topprop{}}{\botprop{}}}{\emptyobject{}}}
+{ \judgement {\propenv{}} {\classvalue{\classhint{}} {\overrightarrow {\classfieldpair{\fld{}} {\val{}}}}}{\class{}}{\filterset{\topprop{}}{\botprop{}}}{\emptyobject{}}}
 }
 
 \newcommand\singletonallsyntax[0]{
@@ -1263,53 +1263,53 @@
 
 \newcommand\BLocal[0]{
 \infer [B-Local]
-{ \inopenv {\openv{}} {\x{}} {\v{}} }
-{ \opsem {\openv{}} {\x{}} {\v{}} }
+{ \inopenv {\openv{}} {\x{}} {\val{}} }
+{ \opsem {\openv{}} {\x{}} {\val{}} }
 }
 
 \newcommand\BDo[0]{
 \infer [B-Do]
-{ \opsem {\openv{}} {\e{1}} {\v{1}} 
+{ \opsem {\openv{}} {\e{1}} {\val{1}} 
   \\\\
-  \opsem {\openv{}} {\e{}} {\v{}} 
+  \opsem {\openv{}} {\e{}} {\val{}} 
 }
-{ \opsem {\openv{}} {\doexp{\e{1}}{\e{}}} {\v{}} }
+{ \opsem {\openv{}} {\doexp{\e{1}}{\e{}}} {\val{}} }
 }
 
 
 \newcommand\BLet[0]{
 \infer [B-Let]
-{ \opsem {\openv{}} {\e{a}} {\v{a}}
+{ \opsem {\openv{}} {\e{a}} {\val{a}}
   \\\\
-  \opsem {\extendopenv{\openv{}}{\x{}}{\v{a}}}
+  \opsem {\extendopenv{\openv{}}{\x{}}{\val{a}}}
          {\e{}}
-         {\v{}}
+         {\val{}}
  }
 { \opsem {\openv{}} 
          {\letexp {\x{}} {\e{a}} {\e{}}}
-         {\v{}}}
+         {\val{}}}
      }
 
 
 \newcommand\BVal[0]{
 \infer [B-Val]
 {}
-{ \opsem {\openv{}} {\v{}} {\v{}}}
+{ \opsem {\openv{}} {\val{}} {\val{}}}
 }
 
 \newcommand\BIfTrue[0]{
 \infer [B-IfTrue]
-{ \opsem {\openv{}} {\e{1}} {\v{1}}
+{ \opsem {\openv{}} {\e{1}} {\val{1}}
   \\
-  {\v{1}} \not= {\false{}}
+  {\val{1}} \not= {\false{}}
   \\\\
-  {\trdiff{{\v{1}} \not= {\nil{}}}}
+  {\trdiff{{\val{1}} \not= {\nil{}}}}
   \\
-  \opsem {\openv{}} {\e{2}} {\v{}}
+  \opsem {\openv{}} {\e{2}} {\val{}}
 }
 { \opsem {\openv{}}
          {\ifexp {\e1} {\e2} {\e3}}
-         {\v{}}
+         {\val{}}
        }
      }
 
@@ -1319,11 +1319,11 @@
   \ \ \trdiff{\text{or}\ \ 
   {\opsem {\openv{}} {\e{1}} {\nil{}}}}
   \\\\
-  \opsem {\openv{}} {\e{3}} {\v{}}
+  \opsem {\openv{}} {\e{3}} {\val{}}
 }
 { \opsem {\openv{}}
          {\ifexp {\e1} {\e2} {\e3}}
-         {\v{}}
+         {\val{}}
        }
      }
 
@@ -1337,13 +1337,13 @@
 
 \newcommand\BIsA[0]{
 \infer [B-IsA]
-{ \opsem {\openv{}} {\e{1}} {\v{1}}
+{ \opsem {\openv{}} {\e{1}} {\val{1}}
   \\
-  \opsem {\openv{}} {\e{2}} {\v{2}}
+  \opsem {\openv{}} {\e{2}} {\val{2}}
   \\
-  \isaopsem{\v{1}}{\v{2}} = {\v{}}
+  \isaopsem{\val{1}}{\val{2}} = {\val{}}
 }
-{\opsem {\openv{}} {\isaapp {\e{1}} {\e{2}}} {\v{}}}
+{\opsem {\openv{}} {\isaapp {\e{1}} {\e{2}}} {\val{}}}
 }
 
 \newcommand\BBetaClosure[0]{
@@ -1354,15 +1354,15 @@
          \\\\
   \opsem {\openv{}}
          {\e{a}}
-         {\v{a}}
+         {\val{a}}
          \\\\
-  \opsem {\extendopenv {\openv{c}} {\x{}} {\v{a}}}
+  \opsem {\extendopenv {\openv{c}} {\x{}} {\val{a}}}
          {\e{b}}
-         {\v{}}
+         {\val{}}
        }
 { \opsem {\openv{}}
          {\appexp {\e{f}} {\e{a}}}
-         {\v{}}
+         {\val{}}
        }
      }
 
@@ -1370,7 +1370,7 @@
 \infer [B-BetaMulti]
 { \opsem {\openv{}}
          {\e{}}
-         {\multi {\v{d}} {\disptable{}}}
+         {\multi {\val{d}} {\disptable{}}}
          \  \  \ 
 %         \\ 
   \opsem {\openv{}}
@@ -1379,23 +1379,23 @@
          \ \  \ 
          %\\
   \opsem {\openv{}}
-         {\appexp {\v{d}} {\vp{}}}
-         {\v{e}}
+         {\appexp {\val{d}} {\vp{}}}
+         {\val{e}}
          \ \  \ 
          %\\
   \getmethod {\disptable{}}
-             {\v{e}}
-             {\v{k}}
-             {\v{f}}
+             {\val{e}}
+             {\val{k}}
+             {\val{f}}
              \ \ 
          % \\
   \opsem {\openv{}}
-         {\appexp {\v{f}} {\vp{}}}
-         {\v{}}
+         {\appexp {\val{f}} {\vp{}}}
+         {\val{}}
        }
 { \opsem {\openv{}}
          {\appexp {\e{}} {\ep{}}}
-         {\v{}}
+         {\val{}}
        }
      }
 
@@ -1404,19 +1404,19 @@ $$
 \begin{array}{ll}
 
   \getmethod {\disptable{}}
-             {\v{e}}
-             {\v{v}}
-             {\v{f}}
+             {\val{e}}
+             {\val{v}}
+             {\val{f}}
              &
-             \text{if } {\overrightarrow{\v{fs}}} = \{{\v{f}}\}
-             \text{ where } {\overrightarrow{\v{fs}}} = 
-                \{ \v{f} | 
-                    {\mapvalentry{\v{k}}{\v{f}}} \in \disptable{} 
+             \text{if } {\overrightarrow{\val{fs}}} = \{{\val{f}}\}
+             \text{ where } {\overrightarrow{\val{fs}}} = 
+                \{ \val{f} | 
+                    {\mapvalentry{\val{k}}{\val{f}}} \in \disptable{} 
                   \text{ and } 
-                \isaopsem{\v{e}}{\v{k}} = {\true{}} \}
+                \isaopsem{\val{e}}{\val{k}} = {\true{}} \}
              \\
   \getmethoderr {\disptable{}}
-             {\v{e}}
+             {\val{e}}
              {\mmerror{}} &\text{otherwise}
 
 \end{array}
@@ -1425,14 +1425,14 @@ $$
 
      \newcommand\BDefMulti[0]{
 \infer [B-DefMulti]
-{ \opsem {\openv{}} {\e{}} {\v{d}}
+{ \opsem {\openv{}} {\e{}} {\val{d}}
   \\
-  \v{} = {\multi {\v{d}} {\emptydisptable}}
+  \val{} = {\multi {\val{d}} {\emptydisptable}}
 }
 {\opsem {\openv{}}
         {\createmultiexp {\ty{}}
                          {\e{}}}
-        {\v{}}
+        {\val{}}
 }
      }
 
@@ -1440,24 +1440,24 @@ $$
 \infer [B-DefMethod]
 { \opsem {\openv{}}
          {\e{}}
-         {\multi {\v{d}} {\disptable{}}}
+         {\multi {\val{d}} {\disptable{}}}
          \\
   \opsem {\openv{}}
          {\ep{}}
-         {\v{v}}
+         {\val{v}}
          \\
   \opsem {\openv{}}
          {\e{f}}
-         {\v{f}}
+         {\val{f}}
          \\
-         \v{} = 
-        {\multi {\v{d}} {\extenddisptable {\disptable{}} 
-                                {\v{v}}
-                                {\v{f}}}}
+         \val{} = 
+        {\multi {\val{d}} {\extenddisptable {\disptable{}} 
+                                {\val{v}}
+                                {\val{f}}}}
 }
 {\opsem {\openv{}}
         {\extendmultiexp {\e{}} {\ep{}} {\e{f}}}
-        {\v{}}
+        {\val{}}
       }
      }
 
@@ -1465,9 +1465,9 @@ $$
 \infer [B-Delta]
 { \opsem {\openv{}} {\e{}} {\const{}}
   \\\\
-  \opsem {\openv{}} {\ep{}} {\v{}}
+  \opsem {\openv{}} {\ep{}} {\val{}}
   \\\\
-  \constantopsem{\const{}}{\v{}} = \vp{}
+  \constantopsem{\const{}}{\val{}} = \vp{}
 }
 { \opsem {\openv{}}
          {\appexp {\e{}} {\ep{}}}
@@ -1479,13 +1479,13 @@ $$
 \infer [B-Field]
 { \opsem {\openv{}}
          {\e{}}
-       {\v{}}
+       {\val{}}
          \\
-         \getfieldjava{\classhint{1}} {\v{1}} {\fld{}} {\classhint{2}} {\v{}}
+         \getfieldjava{\classhint{1}} {\val{1}} {\fld{}} {\classhint{2}} {\val{}}
        }
 { \opsem {\openv{}}
          {\fieldstaticexp {\classhint{1}} {\classhint{2}} {\fld{}} {\e{}}}
-         {\v{}}
+         {\val{}}
    }
 }
 
@@ -1493,22 +1493,22 @@ $$
 \infer [B-Method]
 { \opsem {\openv{}}
          {\e{m}}
-         {\v{m}}
+         {\val{m}}
   \\
   \overrightarrow{
   \opsem {\openv{}}
          {\e{a}}
-         {\v{a}}
+         {\val{a}}
        }
   \\
-  \invokejavamethod {\classhint{1}} {\v{m}} {mth}
-                    {\overrightarrow{\classhint{a}}} {\overrightarrow{\v{a}}}
+  \invokejavamethod {\classhint{1}} {\val{m}} {mth}
+                    {\overrightarrow{\classhint{a}}} {\overrightarrow{\val{a}}}
                     {\classhint{2}}
-                    {\v{}}
+                    {\val{}}
 }
 {\opsem {\openv{}}
         {\methodstaticexp {\classhint{1}} {\overrightarrow{\classhint{a}}} {\classhint{2}} {mth} {\e{m}} {\overrightarrow{\e{a}}}}
-        {\v{}}
+        {\val{}}
       }
 }
 
@@ -1518,18 +1518,18 @@ $$
   \overrightarrow{
   \opsem {\openv{}}
          {\e{i}}
-         {\v{i}}
+         {\val{i}}
        }
          \\
          \newjava {\classhint{1}}
                   {\overrightarrow{\classhint{i}}}
-                  {\overrightarrow{\v{i}}}
-                  {\v{}}
+                  {\overrightarrow{\val{i}}}
+                  {\val{}}
        }
 { \opsem {\openv{}}
          {\newstaticexp {\overrightarrow{\classhint{i}}} {\classhint{1}} 
                         {\class{}} {\overrightarrow{\e{i}}}}
-         {\v{}}}
+         {\val{}}}
 }
 
 \newcommand\BAssoc[0]{
@@ -1539,13 +1539,13 @@ $$
         \\
  \opsem {\openv{}} {\e{k}} {\kw{}}
  \\\\
- \opsem {\openv{}} {\e{v}} {\v{v}}
+ \opsem {\openv{}} {\e{v}} {\val{v}}
 }
 {
  \opsem {\openv{}}
         {\assocexp {\e{}} {\e{k}} {\e{v}}} 
         {\extendmap{\mapval{}}
-          {\kw{}}{\v{v}}}
+          {\kw{}}{\val{v}}}
                 }
               }
 
@@ -1839,9 +1839,9 @@ $$
 \newcommand\isaopsemfigure[0]{
   \ma{
 \begin{array}{lllr}
-  \isaopsem{\v{}}{\v{}} &=& {\true{}} & \v{} \notequal {\class{}} \\
+  \isaopsem{\val{}}{\val{}} &=& {\true{}} & \val{} \notequal {\class{}} \\
   \isaopsem{\class{}}{\classp{}} &=& {\true{}} & \issubtypein{}{\class{}}{\classp{}}\\
-  \isaopsem{\v{}}{\vp{}} &=& {\false{}} & \text{otherwise}
+  \isaopsem{\val{}}{\vp{}} &=& {\false{}} & \text{otherwise}
 \end{array}
   }
 }
@@ -1872,7 +1872,7 @@ $$
 % multimethod syntax
 
 \newcommand\disptablesyntax[0]{
- \disptable{}   &::=& \{ \overrightarrow{\v{} \mapsto \v{}} \}
+ \disptable{}   &::=& \{ \overrightarrow{\val{} \mapsto \val{}} \}
                &\mbox{Dispatch tables}
              }
              % NOTE copied into multimethod syntax figure
@@ -1947,11 +1947,11 @@ $$
 }
 
 \newcommand\classvaluesyntax[0]{
-  {\classvalue{\classhint{}} {\overrightarrow {\classfieldpair{\fld{}} {\v{}}}}}
+  {\classvalue{\classhint{}} {\overrightarrow {\classfieldpair{\fld{}} {\val{}}}}}
 }
 
 \newcommand\openvsyntax[0]{
-  \openv{}     &::=& \{\overrightarrow{\x{} \mapsto \v{}}\}
+  \openv{}     &::=& \{\overrightarrow{\x{} \mapsto \val{}}\}
                 &\mbox{Value environments}
 }
 
@@ -2170,23 +2170,23 @@ $$
 
 \newcommand\javanewassumption[1]{
 \begin{assumption}[\newjavaliteral] \label{#1:assumption:new}
-  If\ $\forall i.\ {\v{i}} = {\classvalue{\classhint{i}}{\overrightarrow{\classfieldpair{\fld{j}} {\v{j}}}}}\ or\ {\v{i}}= {\nil}$
-  and {\v{i}} is consistent with {\openv{}}
+  If\ $\forall i.\ {\val{i}} = {\classvalue{\classhint{i}}{\overrightarrow{\classfieldpair{\fld{j}} {\val{j}}}}}\ or\ {\val{i}}= {\nil}$
+  and {\val{i}} is consistent with {\openv{}}
   then either
   \begin{itemize}
   \item $\newjava {\classhint{}}
                 {\overrightarrow{\classhint{i}}}
-                {\overrightarrow{\v{i}}}
-                {\classvalue{\classhint{}}{\overrightarrow {\classfieldpair{\fld{k}} {\v{k}}}}}$
+                {\overrightarrow{\val{i}}}
+                {\classvalue{\classhint{}}{\overrightarrow {\classfieldpair{\fld{k}} {\val{k}}}}}$
                 which is consistent with {\openv{}},
   \item 
         $\newjava {\classhint{}}
                 {\overrightarrow{\classhint{i}}}
-                {\overrightarrow{\v{i}}}
-                {\errorval{\v{e}}}$, or
+                {\overrightarrow{\val{i}}}
+                {\errorval{\val{e}}}$, or
   \item $\newjavanoeq {\classhint{}}
                 {\overrightarrow{\classhint{i}}}
-                {\overrightarrow{\v{i}}}$
+                {\overrightarrow{\val{i}}}$
                 is undefined.
   \end{itemize}
 \end{assumption}
@@ -2198,49 +2198,49 @@ $$
 \javanewassumption{#1}
 
 \begin{assumption}[\getfieldliteral] \label{#1:assumption:field}
-  If\ {\v{1}} = ${\classvalue{\classhint{1}}{{\classfieldpair{\fld{}}{\v{f}}, {\overrightarrow{\classfieldpair{\fld{l}} {\v{l}}}}}}}$,
+  If\ {\val{1}} = ${\classvalue{\classhint{1}}{{\classfieldpair{\fld{}}{\val{f}}, {\overrightarrow{\classfieldpair{\fld{l}} {\val{l}}}}}}}$,
   then either
   \begin{itemize}
     \item
-      \getfieldjava{\classhint{1}} {\v{1}} {\fld{}} {\classhint{2}}{\v{f}},
+      \getfieldjava{\classhint{1}} {\val{1}} {\fld{}} {\classhint{2}}{\val{f}},
                   and either
                   \begin{itemize}
                     \item
-                  \v{f} = ${\classvalue{\classhint{2}}{\overrightarrow{\classfieldpair{\fld{m}} {\v{m}}}}}$
+                  \val{f} = ${\classvalue{\classhint{2}}{\overrightarrow{\classfieldpair{\fld{m}} {\val{m}}}}}$
                    or 
                     \item
-                  \v{f} = \nil, or
+                  \val{f} = \nil, or
                   \end{itemize}
     \item
-      \getfieldjava{\classhint{1}} {\v{1}} {\fld{}} {\classhint{2}} {\errorval{\v{e}}}.
+      \getfieldjava{\classhint{1}} {\val{1}} {\fld{}} {\classhint{2}} {\errorval{\val{e}}}.
   \end{itemize}
 \end{assumption}
 
 \begin{assumption}[\invokejavamethodliteral] \label{#1:assumption:method}
-  If\ {\v{1}} = {\classvalue{\classhint{1}}{\overrightarrow{\classfieldpair{\fld{l}} {\v{l}}}}},
-  $\forall i.\ {\v{i}}={\classvalue{\classhint{i}}{\overrightarrow{\classfieldpair{\fld{j}} {\v{j}}}}}\ or\ {\v{i}}={\nil}$
+  If\ {\val{1}} = {\classvalue{\classhint{1}}{\overrightarrow{\classfieldpair{\fld{l}} {\val{l}}}}},
+  $\forall i.\ {\val{i}}={\classvalue{\classhint{i}}{\overrightarrow{\classfieldpair{\fld{j}} {\val{j}}}}}\ or\ {\val{i}}={\nil}$
          then either
          \begin{itemize}
            \item
-  \invokejavamethod {\classhint{1}} {\v{m}} {mth}
-                    {\overrightarrow{\classhint{i}}} {\overrightarrow{\v{i}}}
+  \invokejavamethod {\classhint{1}} {\val{m}} {mth}
+                    {\overrightarrow{\classhint{i}}} {\overrightarrow{\val{i}}}
                     {\classhint{2}}
-                    {\v{}}
+                    {\val{}}
                   and either
                   \begin{itemize}
                     \item
-                  \v{} = ${\classvalue{\classhint{2}}{\overrightarrow{\classfieldpair{\fld{m}} {\v{m}}}}}$
+                  \val{} = ${\classvalue{\classhint{2}}{\overrightarrow{\classfieldpair{\fld{m}} {\val{m}}}}}$
                   or\ 
-                  \v{} = \nil, or
+                  \val{} = \nil, or
                   \end{itemize}
           \item
-  \invokejavamethod {\classhint{1}} {\v{m}} {mth}
-                    {\overrightarrow{\classhint{i}}} {\overrightarrow{\v{i}}}
+  \invokejavamethod {\classhint{1}} {\val{m}} {mth}
+                    {\overrightarrow{\classhint{i}}} {\overrightarrow{\val{i}}}
                     {\classhint{2}}
-                    {\errorval{\v{e}}}, or
+                    {\errorval{\val{e}}}, or
           \item 
-  \invokejavamethodnoeq {\classhint{1}} {\v{m}} {mth}
-                    {\overrightarrow{\classhint{i}}} {\overrightarrow{\v{i}}}
+  \invokejavamethodnoeq {\classhint{1}} {\val{m}} {mth}
+                    {\overrightarrow{\classhint{i}}} {\overrightarrow{\val{i}}}
                     {\classhint{2}}
                     is undefined.
         \end{itemize}
@@ -2249,12 +2249,12 @@ $$
 
 \newcommand\istruefalsedefinitions[1]{
 \begin{definition}[\istruevalOp{}] \label{#1:definition:istrueval}
-  \istrueval{\v{}} iff {\v{}} $\not=$ \false\ and {\v{}} $\not=$ \nil.
+  \istrueval{\val{}} iff {\val{}} $\not=$ \false\ and {\val{}} $\not=$ \nil.
 
 \end{definition}
 
 \begin{definition}[\isfalsevalOp{}] \label{#1:definition:isfalseval}
-  \isfalseval{\v{}} iff {\v{}} $=$ \false\ or {\v{}} $=$ \nil.
+  \isfalseval{\val{}} iff {\val{}} $=$ \false\ or {\val{}} $=$ \nil.
 
 \end{definition}
 }
@@ -2267,15 +2267,15 @@ and \opsem {\openv{}} {\e{}} {\a{}}
 then either
 \begin{itemize}
   \item
-    \opsem {\openv{}} {\e{}} {\v{}} 
+    \opsem {\openv{}} {\e{}} {\val{}} 
 and all of the following hold:
 \begin{enumerate}
-  \item either \object{} = \emptyobject{} or \inopenv {\openv{}} {\object{}} {\v{}},
-  \item either {\istrueval{\v{}}} and {\satisfies{\openv{}}{\thenprop{\prop{}}}} or 
-               {\isfalseval{\v{}}} and {\satisfies{\openv{}}{\elseprop{\prop{}}}},
-  \item \judgementrewrite{}{\v{}}{\ty{}}{\filterset{\thenprop{\propp{}}}{\elseprop{\propp{}}}}{\objectp{}}{\v{}}
+  \item either \object{} = \emptyobject{} or \inopenv {\openv{}} {\object{}} {\val{}},
+  \item either {\istrueval{\val{}}} and {\satisfies{\openv{}}{\thenprop{\prop{}}}} or 
+               {\isfalseval{\val{}}} and {\satisfies{\openv{}}{\elseprop{\prop{}}}},
+  \item \judgementrewrite{}{\val{}}{\ty{}}{\filterset{\thenprop{\propp{}}}{\elseprop{\propp{}}}}{\objectp{}}{\val{}}
         for some \thenprop{\propp{}}, \elseprop{\propp{}} and {\objectp{}}, and
-  \item \consistentwith{\v{}}{\openv{}}, or
+  \item \consistentwith{\val{}}{\openv{}}, or
 \end{enumerate}
 
   \item
@@ -2285,8 +2285,8 @@ and all of the following hold:
 
 \newcommand\soundnesstheorembody[1]{
 If \judgementshowrewrite{\propenv{}}{\ep{}}{\ty{}}{\filterset{\thenprop{\prop{}}}{\elseprop{\prop{}}}}{\object{}}{\e{}}
-and \opsem {\openv{}} {\e{}} {\v{}} 
-then \judgementrewrite{}{\v{}}{\ty{}}{\filterset{\thenprop{\propp{}}}{\elseprop{\propp{}}}}{\objectp{}}{\v{}}
+and \opsem {\openv{}} {\e{}} {\val{}} 
+then \judgementrewrite{}{\val{}}{\ty{}}{\filterset{\thenprop{\propp{}}}{\elseprop{\propp{}}}}{\objectp{}}{\val{}}
         for some \thenprop{\propp{}}, \elseprop{\propp{}} and {\objectp{}}.
       }
 
@@ -2330,7 +2330,7 @@ then \judgementrewrite{}{\v{}}{\ty{}}{\filterset{\thenprop{\propp{}}}{\elseprop{
   Corollary of lemma~\ref{#1:lemma:soundness}, since by lemma~\ref{#1:lemma:soundness}
   when {\judgementshowrewrite {} {\ep{}} {\ty{}} {\filterset {\thenprop{\prop{}}}{\elseprop{\prop{}}}} {\object{}}{\e{}}}, 
  either
-    \opsem {} {\e{}} {\v{}} or
+    \opsem {} {\e{}} {\val{}} or
     \opsem {} {\e{}} {\errorvalv{}}, therefore \notopsem{}{\e{}}{\wrong{}}.
 \end{proof}
 \end{theorem}
@@ -2363,10 +2363,10 @@ then \judgementrewrite{}{\v{}}{\ty{}}{\filterset{\thenprop{\propp{}}}{\elseprop{
 
 \newcommand\consistentwithonlydef[1]{
 \begin{definition}[Consistent with] \label{#1:definition:consistentwith}
-  \consistentwith{\v{}}{\openv{}}
+  \consistentwith{\val{}}{\openv{}}
   iff 
   \begin{itemize}
-    \item $\forall$ \closure{\openv{1}}{\abs{\x{}}{\s{}}{\e{}}} in \v{},
+    \item $\forall$ \closure{\openv{1}}{\abs{\x{}}{\s{}}{\e{}}} in \val{},
           if \judgementselfrewrite{}{\closure{\openv{1}}{\abs{\x{}}{\s{}}{\e{}}}}{\ty{}}{\filterset{\topprop{}}{\botprop{}}}{\emptyobject{}},
   and $\forall$ \objectp{} in \ty{}, either 
       \objectp{} = \emptyobject{}, or 
@@ -2391,7 +2391,7 @@ then \judgementrewrite{}{\v{}}{\ty{}}{\filterset{\thenprop{\propp{}}}{\elseprop{
   \isconsistent{\openv{}}
   iff
 
-  $\forall \v{} \in rng(\openv{})$, \consistentwith{\v{}}{\openv{}}.
+  $\forall \val{} \in rng(\openv{})$, \consistentwith{\val{}}{\openv{}}.
 \end{definition}
 }
 
@@ -2601,10 +2601,10 @@ $$
 
 \newcommand\restrictfigure[0]{
 \restrict{\ty{}} {\s{}} &=& \Bot{} &
-                       \text{if} \not\exists \v{}.\  
-                          {\judgement {} {\v{}} {\ty{}} {\prop{}}{\object{}}}
+                       \text{if} \not\exists \val{}.\  
+                          {\judgement {} {\val{}} {\ty{}} {\prop{}}{\object{}}}
                           \ \text{and}\ 
-                          {\judgement {} {\v{}} {\s{}} {\propp{}}{\objectp{}}}
+                          {\judgement {} {\val{}} {\s{}} {\propp{}}{\objectp{}}}
                           %handled by update
 %                          \\
 %\restrict{\Unionsplice{\overrightarrow{{\ty{}}}}}{\s{}} &=& 
@@ -2659,10 +2659,10 @@ $$
 \begin{mathpar}
 
 \begin{array}{lllr}
-\constantopsem{\classconst{}}{\classvalue{\class{}} {\overrightarrow {\classfieldpair{\fld{}} {\v{}}}}} &=& \class{}\\
+\constantopsem{\classconst{}}{\classvalue{\class{}} {\overrightarrow {\classfieldpair{\fld{}} {\val{}}}}} &=& \class{}\\
 \constantopsem{\classconst{}}{\class{}} &=& \Class{}\\
 \constantopsem{\classconst{}}{\closure {\openv{}} {\abs {\x{}} {\ty{}} {\e{}}}} &=& \IFn{}\\
-\constantopsem{\classconst{}}{\multi {\v{d}} {\disptable{}}} &=& \PMulti{}\\
+\constantopsem{\classconst{}}{\multi {\val{d}} {\disptable{}}} &=& \PMulti{}\\
 \constantopsem{\classconst{}}{\mapval{}} &=& \HMapInstance{}\\
 \constantopsem{\classconst{}}{\kw{}} &=& \Keyword{}\\
 \constantopsem{\classconst{}}{\num{}} &=& \Number{}
@@ -2672,7 +2672,7 @@ $$
 \constantopsem{\classconst{}}{\false{}} &=& \Boolean{}\\
 \constantopsem{\classconst{}}{\nil{}} &=& \nil{}
 % never is wrong
-%\constantopsem{\classconst{}}{\v{}} &=& \wrong{} & otherwise\\
+%\constantopsem{\classconst{}}{\val{}} &=& \wrong{} & otherwise\\
   \\\\
 \constantopsem{\numberhuh{}}{\num{}} &=& \true{}\\
 \constantopsem{\numberhuh{}}{\e{}} &=& \false{} \\

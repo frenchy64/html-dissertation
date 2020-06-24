@@ -21,7 +21,7 @@ occurrence typing~\cite{TF10}, the foundation of \lambdatc{}.
 %and present the full syntax at the end of the section.
 
 \paragraph{Expressions} Syntax is given in \figref{main:figure:termsyntax}. Expressions \e{} 
-include variables \x{}, values \v{},
+include variables \x{}, values \val{},
 applications, abstractions, conditionals, and let expressions.
 All binding forms introduce fresh variables---a subtle but important point since our type environments
 are not simply dictionaries.
@@ -89,7 +89,6 @@ of calling \classconst{} and looking up a keyword $k$, respectively.
 \paragraph{Propositions with a logical system}
 In standard type systems, association lists often
 track the types of variables, like in LC-Let and LC-Local.
-\begin{singlespacing}
 \begin{mathpar}
 \infer [LC-Let]
 { \judgementtwo {{\propenv{}}}
@@ -110,7 +109,6 @@ track the types of variables, like in LC-Let and LC-Local.
             {\x{}} {\ty{}}
            }
 \end{mathpar}
-\end{singlespacing}
 
 Occurrence typing instead pairs \emph{logical formulas},
 that can reason about arbitrary non-empty objects,
@@ -120,7 +118,6 @@ variable $x$ is of type \s{}.
 %A \emph{logical system}
 %must now \emph{prove}
 %a variable's type.
-\begin{singlespacing}
 \begin{mathpar}
 \infer [T0-Let]
 { \judgementtwo {{\propenv{}}}
@@ -142,7 +139,6 @@ variable $x$ is of type \s{}.
             {\x{}} {\ty{}}
            }
 \end{mathpar}
-\end{singlespacing}
 In T0-Local, 
 $
 { \inpropenv {\propenv{}} {\isprop {\ty{}}{\x{}}}}
@@ -156,7 +152,7 @@ appeals to the proof system to solve for \ty{}.
 $$
 \begin{array}{lrll}
   \e{} &::=& \x{}
-                      \alt \v{} 
+                      \alt \val{} 
                       \alt {\comb {\e{}} {\e{}}} 
                       \alt {\abs {\x{}} {\ty{}} {\e{}}} 
                       \alt {\ifexp {\e{}} {\e{}} {\e{}}}
@@ -164,7 +160,7 @@ $$
                       \alt {\letexp {\x{}} {\e{}} {\e{}}}
                       %\alt {\errorvalv{}}
                       &\mbox{Expressions} \\
-  \v{} &::=&          \singletonmeta{}
+  \val{} &::=&          \singletonmeta{}
                       \alt {\nat{}}
                       \alt {\const{}}
                       \alt {\str{}}
@@ -907,7 +903,7 @@ semantics of \ifliteral{} (\figref{main:figure:coresemantics}).
                       &\mbox{Expressions}\\
      &\alt& \nonreflectiveexpsyntax{} &\mbox{Non-reflective Expressions}\\
 
-    \v{} &::=& \ldots \alt {\classvalue{\classhint{}} {\overrightarrow {\classfieldpair{\fld{}} {\v{}}}}}
+    \val{} &::=& \ldots \alt {\classvalue{\classhint{}} {\overrightarrow {\classfieldpair{\fld{}} {\val{}}}}}
     &\mbox{Values} \\
 
     \classtableallsyntax{}
@@ -1179,7 +1175,7 @@ $$
   \e{} &::=& \ldots \alt {\createmultiexp {\ty{}} {\e{}}} \alt
              {\extendmultiexp {\e{}} {\e{}} {\e{}}}
              \alt {\isaapp {\e{}} {\e{}}} &\mbox{Expressions} \\
-  \v{} &::=& \ldots \alt {\multi {\v{}} {\disptable{}}}
+  \val{} &::=& \ldots \alt {\multi {\val{}} {\disptable{}}}
                 &\mbox{Values} \\
  \disptablesyntax{} \\
   \s{}, \ty{} &::=& \ldots \alt {\MultiFntype{\ty{}}{\ty{}}}
@@ -1334,8 +1330,8 @@ method is checked independently based on local type information.
 %The expression {\extendmultiexp {\e{m}} {\e{v}}{\e{f}}}
 %extends multimethod \e{m} and to map
 %dispatch value {\e{v}} to {\e{f}} in an extended dispatch table.
-%The value {\multi {\v{}} {\disptable{}}} is the runtime value of a multimethod
-%with dispatch function {\v{}} and dispatch table {\disptable{}}.
+%The value {\multi {\val{}} {\disptable{}}} is the runtime value of a multimethod
+%with dispatch function {\val{}} and dispatch table {\disptable{}}.
 %
 %The T-DefMulti rule ensures that the type of the dispatch function
 %has at least as permissive a parameter type
@@ -1403,11 +1399,11 @@ B-DefMulti creates a multimethod with the given dispatch function and an empty d
 B-DefMethod produces a new multimethod with an extended dispatch table.
 
 The overall dispatch mechanism is summarised by B-BetaMulti.
-First the dispatch function \v{d} is applied to the argument \vp{} to obtain
-the dispatch value \v{e}.
-Based on \v{e},
+First the dispatch function \val{d} is applied to the argument \vp{} to obtain
+the dispatch value \val{e}.
+Based on \val{e},
 the \getmethodliteral{} metafunction (\figref{main:figure:mmsyntax})
-extracts a method \v{f} from the method table {\disptable{}}
+extracts a method \val{f} from the method table {\disptable{}}
 and applies it to the original argument for the final result.
 
 \section{Precise Types for Heterogeneous maps}
@@ -1419,7 +1415,7 @@ and applies it to the original argument for the final result.
   \begin{altgrammar}
     \e{} &::=& \ldots \alt \hmapexpressionsyntax{}
     &\mbox{Expressions} \\
-    \v{} &::=& \ldots \alt {\emptymap{}}
+    \val{} &::=& \ldots \alt {\emptymap{}}
     &\mbox{Values} \\
     \ty{} &::=& \ldots \alt {\HMapgeneric {\mandatory{}} {\absent{}}}
     &\mbox{Types} \\
@@ -1495,8 +1491,8 @@ Keys cannot be both present and absent.
 %\HMapcwithabsent{\mandatory{}}{\absent{}} is abbreviated to \HMapc{\mandatory{}}. 
 
 The metavariable \mapval{}
-ranges over the runtime value of maps {\curlymapvaloverright{\kw{}}{\v{}}},
-usually written {\curlymapvaloverrightnoarrow{\kw{}}{\v{}}}.
+ranges over the runtime value of maps {\curlymapvaloverright{\kw{}}{\val{}}},
+usually written {\curlymapvaloverrightnoarrow{\kw{}}{\val{}}}.
 We %do not model keywords as functions,
 only provide syntax for the empty map literal,
 however when convenient we abbreviate non-empty map literals
@@ -1619,7 +1615,6 @@ The occurrence typing proof system uses standard propositional logic,
 except for where nested information is combined. This is
 handled by L-Update:
 {  %\footnotesize
-\singlespacing
   $$
 \LUpdate{}
 $$
