@@ -182,7 +182,7 @@
 \newmeta\class{C}
 \newmeta\classp{C{'}}
 \newmeta\protocol{P}
-\newmeta\k{k}
+\newmeta\kw{k}
 \newmeta\str{s}
 \newmeta\num{n}
 \newmeta\nat{n}
@@ -1755,7 +1755,7 @@ $$
 
 \newcommand\SHMapP[0]{
 \infer [S-HMapP]
-{ \forall i.\ {\inmandatory{\k{i}}{\s{i}}{\mandatory{}}} \text{ and } \issubtypein {} {\s{i{}}} {\ty{i{}}}
+{ \forall i.\ {\inmandatory{\kw{i}}{\s{i}}{\mandatory{}}} \text{ and } \issubtypein {} {\s{i{}}} {\ty{i{}}}
 }
 {\issubtypein {} 
   {\HMapcwithabsent {\mandatory{}}{\absentp{}}}
@@ -1765,7 +1765,7 @@ $$
 
 \newcommand\SHMap[0]{
 \infer [S-HMap]
-{ \forall i.\ {\inmandatory{\k{i}}{\s{i}}{\mandatory{}}} \text{ and } \issubtypein {} {\s{i{}}} {\ty{i{}}}
+{ \forall i.\ {\inmandatory{\kw{i}}{\s{i}}{\mandatory{}}} \text{ and } \issubtypein {} {\s{i{}}} {\ty{i{}}}
   \\
   {\absent{1}} \supseteq {\absent{2}}
 }
