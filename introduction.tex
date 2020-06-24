@@ -1,0 +1,58 @@
+\section{My Thesis}
+
+\emph{Typed Clojure is a sound and practical optional type system for Clojure.}
+
+\section{Structure of this Dissertation}
+
+This document progresses in several parts that support my thesis statement.
+
+\partref{part:types} motivates and presents the design of Typed Clojure.
+It addresses both parts of my thesis statement.
+
+\begin{itemize}
+  \item \emph{Typed Clojure is sound} I formalize Typed Clojure, including
+    its characteristic features like hash-maps, multimethods, and Java interoperability,
+    and prove the model type sound.
+  \item \emph{Typed Clojure is practical} 
+      I present an empirical study of real-world Typed Clojure usage
+        in over 19,000 lines of code, showing its features correspond to actual usage patterns.
+\end{itemize}
+
+The results and industry feedback of this work inspired three distinct research directions
+to help improve the experience of using Typed Clojure.
+
+\begin{itemize}
+  \item
+\partref{part:autoann} presents a solution to lower the annotation burden in real-world Typed Clojure programs.
+I formalize and implement a tool to automatically annotate types for top-level
+user and library definitions, and empirically study the manual changes needed for the generated annotations
+to pass type checking.
+  \item
+\partref{part:implementations} describes the design and implementation of a 
+new code analyzer for Clojure, in service of enabling user-provided type rules for Clojure macros
+    to help make type checking complex macro usages more robust.
+\item \partref{part:symbolic-closures} motivates and describes \emph{symbolic closure types},
+      a technique that enhances type checking with symbolic execution, that helps check some
+      common Clojure idioms via a compatible extension of Typed Clojure's original design.
+\end{itemize}
+
+Finally, \partref{part:related-future-work} presents the related work and future directions for each part.
+
+\section{Previously Published Work}
+
+\partref{part:types} has been published:
+
+\begin{itemize}
+  \item Ambrose Bonnaire-Sergeant, Rowan Davies, and Sam Tobin-Hochstadt. 
+        Practical Optional Types for Clojure. In
+        \emph{Proceedings of the 25th European Symposium on Programming}, 2016.
+        (ESOP '16)
+\end{itemize}
+
+\partref{part:autoann} is in submission:
+
+\begin{itemize}
+  \item Ambrose Bonnaire-Sergeant, and Sam Tobin-Hochstadt.
+        Squash the work: A Workflow for Typing Untyped Programs that use Ad-Hoc Data Structures.
+        \emph{In Submission}
+\end{itemize}
