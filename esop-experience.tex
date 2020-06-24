@@ -49,11 +49,11 @@ then tracked via Clojure's universal sequence interface~\cite{CljSeqDoc}.
 %\infer [T-LocalAlias]
 %{ \Theta[\x{}] = \object{}
 %  \\
-%  \inpropenv {\propenv{}} {\isprop {\t{}} {\object{}}}
+%  \inpropenv {\propenv{}} {\isprop {\ty{}} {\object{}}}
 %  \\\\
 %  \s{} = {\falsy} }
 %{ \judgement {\Theta; \propenv{}} 
-%             {\hastype {\x{}} {\t{}}}
+%             {\hastype {\x{}} {\ty{}}}
 %             {\filterset {{\notprop {\s{}} {\object{}}}} {{\isprop {\s{}} {\object{}}}}}
 %             {\object{}}
 %                   }
@@ -67,10 +67,10 @@ then tracked via Clojure's universal sequence interface~\cite{CljSeqDoc}.
 %  \judgement
 %       {\Theta[\x{} \mapsto \object{1}];
 %         \propenv{}}
-%             {\hastype {\e{}} {\t{}}} {\filterset {\thenprop {\prop{}}} {\elseprop {\prop{}}}}
+%             {\hastype {\e{}} {\ty{}}} {\filterset {\thenprop {\prop{}}} {\elseprop {\prop{}}}}
 %             {\object{}} 
 %             }
-%{ \judgement {\Theta; \propenv{}} {\hastype {\letexp {\x{}} {\e{1}} {\e{}}} {\t{}}}
+%{ \judgement {\Theta; \propenv{}} {\hastype {\letexp {\x{}} {\e{1}} {\e{}}} {\ty{}}}
 %             {\filterset {\thenprop {\prop{}}} {\elseprop {\prop{}}}}
 %             {\object{}} 
 %             }
@@ -477,10 +477,10 @@ or theory to account for. The post-mortem~\cite{CircleCIBlog} contains more deta
 %use arrays, especially those being passed from foreign Java code.
 %
 %Our basic approach is to make our array types \emph{bivariant}. Array types
-%look like {\ArrayTwo {\t{w}} {\t{r}}} and
+%look like {\ArrayTwo {\ty{w}} {\ty{r}}} and
 %are reminiscent of functions or pipes: having a contravariant parameter for input (writing)
 %and a covariant parameter for output (reading).
-%This type can write type {\t{w}} and read type {\t{r}}.
+%This type can write type {\ty{w}} and read type {\ty{r}}.
 %
 %Most commonly, an array type is invariant in its parameter; it can
 %write and read input of the same type.

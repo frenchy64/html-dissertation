@@ -20,7 +20,7 @@
 \newmeta\s{\esopsigma}              % these are automatically wrapped in \ma
 \newmeta\sp{\esopsigma{'}}
 \newcommand\esoptau{\tau}
-\newmeta\t{\esoptau}
+\newmeta\ty{\esoptau}
 \newmeta\tp{\esoptau{'}}
 \newmeta\tpp{\esoptau{''}}
 \newmeta\T{T}
@@ -205,9 +205,9 @@
 \newcommand\defmultiliteral[0]{{\CLJoperatorfont{defmulti}}}
 \newcommand\defmethodliteral[0]{{\CLJoperatorfont{defmethod}}}
 \newcommand\fnliteral[0]{{\CLJoperatorfont{fn}}}
-\newcommand\abs[3]{\ma{\l #1^{#2} . #3}}
-\newcommand\uabs[2]{\ma{\l #1 . #2}}
-\newcommand\absoverright[3]{\ma{\l \overrightarrow{#1^{#2}} . #3}}
+\newcommand\abs[3]{\ma{\lambda #1^{#2} . #3}}
+\newcommand\uabs[2]{\ma{\lambda #1 . #2}}
+\newcommand\absoverright[3]{\ma{\lambda \overrightarrow{#1^{#2}} . #3}}
 \newcommand\curlymap[1]{\ma{\{#1\}}}
 \newcommand\emptymap[1]{\ma{\{\}}}
 \newcommand\roundpair[2]{\ma{(#1, #2)}}
@@ -287,10 +287,10 @@
 \newcommand\equivapp[2]{(\equivliteral\ #1\ #2)}
 
 % constant typing
-\newcommand\constanttypeliteral[0]{\ma{{\delta}_{\t{}}}}
+\newcommand\constanttypeliteral[0]{\ma{{\delta}_{\ty{}}}}
 \newcommand\constantopsemliteral[0]{\ma{\delta}}
 \newcommand\constanttypetwo[2]{\ma{\constanttypeliteral{}(#2)}}
-\newcommand\constanttype[1]{\constanttypetwo{\t{}}{#1}}
+\newcommand\constanttype[1]{\constanttypetwo{\ty{}}{#1}}
 \newcommand\constantopsem[2]{\ma{{\constantopsemliteral{}}(#1, #2)}}
 \newcommand\classconst[0]{\emph{class}}
 \newcommand\throwconst[0]{\emph{throw}}
@@ -620,12 +620,12 @@
 % Common typing rules
 \newcommand\TLocal[0]{
 \infer [T-Local]
-{ \inpropenv {\propenv{}} {\isprop {\t{}} {\x{}}}
+{ \inpropenv {\propenv{}} {\isprop {\ty{}} {\x{}}}
   \\\\
   \s{} = {\falsydiff} 
 }
 { \judgementselfrewrite {\propenv{}} 
-            {\x{}} {\t{}}
+            {\x{}} {\ty{}}
             {\filterset {{\notprop {\s{}} {\x{}}}} {{\isprop {\s{}} {\x{}}}}}
             %{\filterset {{\notprop {\falsy{}} {\x{}}}} {{\isprop {\falsy{}} {\x{}}}}}
             {\x{}}
@@ -682,14 +682,14 @@
              {\ep1}
 \\\\
 \judgementrewrite {\propenv{}, {\orprop {\thenprop {\prop{1}}} {\elseprop {\prop{1}}}}}
-           {\e{}} {\t{}}
+           {\e{}} {\ty{}}
            {\filterset {\thenprop {\prop{}}} {\elseprop {\prop{}}}} 
            {\object{}}
            {\ep{}}
   }
 { \judgementrewrite
     {\propenv{}} 
-    {\doexp {\e1} {\e{}}} {\t{}}
+    {\doexp {\e1} {\e{}}} {\ty{}}
     {\filterset {\thenprop {\prop{}}} {\elseprop {\prop{}}}} {\object{}} 
     {\doexp {\ep1} {\ep{}}}
              }
@@ -697,23 +697,23 @@
 
 \newcommand\TIf[0]{
 \infer [T-If]
-{ \judgementrewrite {\propenv{}} {\e1} {\t{1}} {\filterset {\thenprop {\prop{1}}} {\elseprop {\prop{1}}}}
+{ \judgementrewrite {\propenv{}} {\e1} {\ty{1}} {\filterset {\thenprop {\prop{1}}} {\elseprop {\prop{1}}}}
                  {\object{1}} 
                  {\ep1}
              \\\\
   \judgementrewrite {\propenv{}, {\thenprop {\prop{1}}}}
-                 {\e2} {\t{}} {\filterset {\thenprop {\prop{}}} {\elseprop {\prop{}}}}
+                 {\e2} {\ty{}} {\filterset {\thenprop {\prop{}}} {\elseprop {\prop{}}}}
                  {\object{}}
                  {\ep2}
   \\\\
   \judgementrewrite {\propenv{}, {\elseprop {\prop{1}}}}
-                 {\e3} {\t{}} {\filterset {\thenprop {\prop{}}} {\elseprop {\prop{}}}}
+                 {\e3} {\ty{}} {\filterset {\thenprop {\prop{}}} {\elseprop {\prop{}}}}
                  {\object{}}
                  {\ep3}
                  %\\\\
                  %\ep{} = {\ifexp {\ep1} {\ep2} {\ep3}}
              }
-{ \judgementrewrite {\propenv{}} {\ifexp {\e1} {\e2} {\e3}} {\t{}}
+{ \judgementrewrite {\propenv{}} {\ifexp {\e1} {\e2} {\e3}} {\ty{}}
                  {\filterset {\thenprop {\prop{}}}
                              {\elseprop {\prop{}}}}
                  {\object{}} 
@@ -736,12 +736,12 @@
        {\propenv{}, {\isprop {\s{}} {\x{}}},
          {\propp{}},
          {\proppp{}}}
-             {\e{2}} {\t{}} {\filterset {\thenprop {\prop{}}} {\elseprop {\prop{}}}}
+             {\e{2}} {\ty{}} {\filterset {\thenprop {\prop{}}} {\elseprop {\prop{}}}}
              {\object{}} 
              {\ep{2}}
              }
 { \judgementrewrite {\propenv{}} {\letexp {\x{}} {\e{1}} {\e{2}}} 
-             {\replacefor {\t{}}
+             {\replacefor {\ty{}}
                           {\object{1}}
                           {\x{}}}
              {\replacefor {\filterset {\thenprop {\prop{}}} {\elseprop {\prop{}}}}
@@ -758,7 +758,7 @@
 \newcommand\TApp[0]{
 \infer [T-App]
 { \judgementrewrite {\propenv{}} {\e{}} {\ArrowOne {\x{}} {\s{}}
-                                                       {\t{}}
+                                                       {\ty{}}
                                                        {\filterset {\thenprop {\prop{f}}}
                                                                    {\elseprop {\prop{f}}}}
                                                        {\object{f}}}
@@ -775,7 +775,7 @@
                 {\ep{1}}
 }
 { \judgementrewrite {\propenv{}} {\appexp {\e{}} {\ep{}}}
-                                        {\replacefor {\t{}}
+                                        {\replacefor {\ty{}}
                                                      {\objectp{}}
                                                      {\x{}}}
                  {\replacefor {\filterset {\thenprop {\prop{f}}}
@@ -812,7 +812,7 @@
 
 \newcommand\TSubsume[0]{
 \infer [T-Subsume]
-{ \judgementrewrite {\propenv{}} {\e{}} {\t{}}
+{ \judgementrewrite {\propenv{}} {\e{}} {\ty{}}
              {\filterset {\thenprop {\prop{}}}
                          {\elseprop {\prop{}}}}
              {\object{}}
@@ -822,7 +822,7 @@
 \\
 \inpropenv {\propenv{}, {\elseprop {\prop{}}}} {\elseprop {\propp{}}}
 \\\\
-\issubtypein {} {\t{}} {\tp{}}
+\issubtypein {} {\ty{}} {\tp{}}
 \\
 \issubobjin {} {\object{}} {\objectp{}}
 }
@@ -838,18 +838,18 @@
 \infer [T-New]
 { \inct{\ctctorentry{\overrightarrow{\class{i}}}}{\ctlookupctors{\ct{}}{\classhint{}}}
   \\
-  \overrightarrow{\javatotcnil{\classhint{i}}{\t{i}}}
+  \overrightarrow{\javatotcnil{\classhint{i}}{\ty{i}}}
   \\
   \overrightarrow{
   \judgementtworewrite {\propenv{}}
-                    {\e{i}} {\t{i}}
+                    {\e{i}} {\ty{i}}
                     {\ep{i}}
                   }
   \\
   \javatotc {\classhint{}}
-            {\t{}}
+            {\ty{}}
            }
-{ \judgementrewrite {\propenv{}} {\newexp {\class{}} {\overrightarrow{\e{i}}}} {\t{}}
+{ \judgementrewrite {\propenv{}} {\newexp {\class{}} {\overrightarrow{\e{i}}}} {\ty{}}
              {\filterset {\topprop{}} {\botprop{}}}
              {\emptyobject{}}
              {\newstaticexp {\overrightarrow{\classhint{i}}} {\classhint{}} 
@@ -862,20 +862,20 @@
 { 
   \overrightarrow{
 \javatotc {\classhint{i}}
-          {\t{i}}
+          {\ty{i}}
           }
   \\
   \javatotc {\classhint{}}
-            {\t{}}
+            {\ty{}}
   \\
   \overrightarrow{
   \judgementtworewrite {\propenv{}}
-                    {\e{i}} {\t{i}}
+                    {\e{i}} {\ty{i}}
                     {\ep{i}}
                   }
            }
 { \judgementrewrite {\propenv{}} {\newstaticexp {\overrightarrow{\classhint{i}}} {\classhint{}} 
-                                                          {\class{}} {\overrightarrow{\e{i}}}} {\t{}}
+                                                          {\class{}} {\overrightarrow{\e{i}}}} {\ty{}}
              {\filterset {\topprop{}} {\botprop{}}}
              {\emptyobject{}}
              {\newstaticexp {\overrightarrow{\classhint{i}}} {\classhint{}} 
@@ -897,9 +897,9 @@
                   \inct{\ctfldentry{\fld{}}{\classhint{2}}}{\ctlookupfields{\ct{}}{\classhint{1}}}
   \ \ \ 
                   %\\
-  \javatotcnil{\classhint{2}}{\t{}}
+  \javatotcnil{\classhint{2}}{\ty{}}
            }
-{ \judgementrewrite {\propenv{}} {\fieldexp {\fld{}} {\e{}}} {\t{}}
+{ \judgementrewrite {\propenv{}} {\fieldexp {\fld{}} {\e{}}} {\ty{}}
              {\filterset {\topprop{}} {\topprop}}
              {\emptyobject{}}
              {\fieldstaticexp {\classhint{1}} {\classhint{2}} {\fld{}} {\ep{}}}
@@ -912,11 +912,11 @@
              \\
   \issubtypein{}{\s{}}{\Object{}}
   \\
-  \javatotcnil {\classhint{2}} {\t{}}
+  \javatotcnil {\classhint{2}} {\ty{}}
   \\
   \judgementtworewrite {\propenv{}} {\e{}} {\s{}} {\ep{}}
            }
-{ \judgementrewrite {\propenv{}} {\fieldstaticexp {\classhint{1}} {\classhint{2}} {\fld{}} {\e{}}} {\t{}}
+{ \judgementrewrite {\propenv{}} {\fieldstaticexp {\classhint{1}} {\classhint{2}} {\fld{}} {\e{}}} {\ty{}}
              {\filterset {\topprop{}} {\topprop}}
              {\emptyobject{}}
              {\fieldstaticexp {\classhint{1}} {\classhint{2}} {\fld{}} {\ep{}}}
@@ -932,18 +932,18 @@
                   \\
                   \inct{\ctmthentry{\mth{}}{\overrightarrow{\classhint{i}}}{\classhint{2}}}{\ctlookupmethods{\ct{}}{\classhint{1}}}
                   \\
-                  \overrightarrow{\javatotcnil{\classhint{i}}{\t{i}}}
+                  \overrightarrow{\javatotcnil{\classhint{i}}{\ty{i}}}
                   \\
              \overrightarrow{
-  \judgementtworewrite {\propenv{}} {\e{i}} {\t{i}} {\ep{i}}
+  \judgementtworewrite {\propenv{}} {\e{i}} {\ty{i}} {\ep{i}}
                   }
                   \\
-                  \javatotcnil{\classhint{2}}{\t{}}
+                  \javatotcnil{\classhint{2}}{\ty{}}
              \\
              \issubtypein{}{\s{}}{\Object{}}
            }
 { \judgementrewrite {\propenv{}} {\methodexp {\mth{}} {\e{}} {\overrightarrow{\e{i}}}}
-             {\t{}}
+             {\ty{}}
              {\filterset {\topprop{}} {\topprop{}}}
              {\emptyobject{}}
              {\methodstaticexp {\classhint{1}} 
@@ -956,25 +956,25 @@
 \newcommand\TMethodStatic[0]{
 \infer [T-MethodStatic]
 { 
-  \overrightarrow{\javatotc {\classhint{i}} {\t{i}}}
+  \overrightarrow{\javatotc {\classhint{i}} {\ty{i}}}
              \\
              \javatotc {\classhint{1}} {\s{}}
              \\
              \issubtypein{}{\s{}}{\Object{}}
              \\
-             \javatotcnil {\classhint{2}} {\t{}}
+             \javatotcnil {\classhint{2}} {\ty{}}
              \\
   \judgementtworewrite {\propenv{}} {\e{}} {\s{}} {\ep{}}
              \\
              \overrightarrow{
-  \judgementtworewrite {\propenv{}} {\e{i}} {\t{i}} {\ep{i}}
+  \judgementtworewrite {\propenv{}} {\e{i}} {\ty{i}} {\ep{i}}
                   }
            }
 { \judgementrewrite {\propenv{}} {\methodstaticexp {\classhint{1}} 
                                                             {\overrightarrow {\classhint{i}}} 
                                                             {\classhint{2}}
                                                             {\mth{}} {\e{}} {\overrightarrow{\e{i}}}}
-                                    {\t{}}
+                                    {\ty{}}
              {\filterset {\topprop{}} {\topprop{}}}
              {\emptyobject{}}
              {\methodstaticexp {\classhint{1}} 
@@ -992,12 +992,12 @@
 
 \newcommand\TDefMulti[0]{
 \infer [T-DefMulti]
-{ \s{} = {\ArrowOne {\x{}} {\t{}} {\tp{}}
+{ \s{} = {\ArrowOne {\x{}} {\ty{}} {\tp{}}
                           {\filterset {\thenprop {\prop{}}}
                                       {\elseprop {\prop{}}}}
                           {\object{}}}
                           \\
-  \sp{} = {\ArrowOne {\x{}} {\t{}} {\tpp{}}
+  \sp{} = {\ArrowOne {\x{}} {\ty{}} {\tpp{}}
                           {\filterset {\thenprop {\propp{}}}
                                       {\elseprop {\propp{}}}}
                           {\objectp{}}}
@@ -1019,27 +1019,27 @@
 \newcommand\TDefMethod[0]{
 \infer [T-DefMethod]
 {
-  \t{m} = {\ArrowOne {\x{}} {\t{}} {\s{}}
+  \ty{m} = {\ArrowOne {\x{}} {\ty{}} {\s{}}
                                     {\filterset {\thenprop {\prop{}}}
                                                 {\elseprop {\prop{}}}}
                                     {\object{}}}
 \\
-\t{d} = {\ArrowOne {\x{}} {\t{}} {\sp{}}
+\ty{d} = {\ArrowOne {\x{}} {\ty{}} {\sp{}}
                    {\filterset {\thenprop {\propp{}}}
                                {\elseprop {\propp{}}}}
                    {\objectp{}}}
              \\
 \judgementtworewrite {\propenv{}}
-                  {\e{m}} {\MultiFntype {\t{m}} {\t{d}}}
+                  {\e{m}} {\MultiFntype {\ty{m}} {\ty{d}}}
                   {\ep{m}}
 \\\\
 \judgementtworewrite {\propenv{}}
-           {\e{v}} {\t{v}}
+           {\e{v}} {\ty{v}}
            {\ep{v}}
 \\
-  \isacompare{\sp{}}{\objectp{}}{\t{v}}{\filterset {\thenprop {\proppp{}}} {\elseprop {\proppp{}}}}
+  \isacompare{\sp{}}{\objectp{}}{\ty{v}}{\filterset {\thenprop {\proppp{}}} {\elseprop {\proppp{}}}}
            \\
-\judgementrewrite {\propenv{}, {\isprop{\t{}} {\x{}}}, {\thenprop {\proppp{}}}}
+\judgementrewrite {\propenv{}, {\isprop{\ty{}} {\x{}}}, {\thenprop {\proppp{}}}}
            {\e{b}} {\s{}}
            {\filterset {\thenprop {\prop{}}}
                        {\elseprop {\prop{}}}}
@@ -1048,11 +1048,11 @@
            \\
            {\ep{}} =
              {\extendmultiexp {\ep{m}} {\ep{v}} 
-               {\abs {\x{}} {\t{}} {\ep{b}}}}
+               {\abs {\x{}} {\ty{}} {\ep{b}}}}
 }
 { \judgementrewrite {\propenv{}} {\extendmultiexp {\e{m}} {\e{v}} 
-                                                            {\abs {\x{}} {\t{}} {\e{b}}}}
-                                           {\MultiFntype {\t{m}} {\t{d}}}
+                                                            {\abs {\x{}} {\ty{}} {\e{b}}}}
+                                           {\MultiFntype {\ty{m}} {\ty{d}}}
              {\filterset {\topprop{}} {\botprop{}}}
              {\emptyobject{}}{\ep{}}
 }
@@ -1067,10 +1067,10 @@
                        {\object{}}
                        {\e{1}}
   \\
-  \judgementtworewrite {\propenv{}} {\ep{}} {\t{}}
+  \judgementtworewrite {\propenv{}} {\ep{}} {\ty{}}
                        {\ep{1}}
              \\
-  \isacompare{\s{}}{\object{}}{\t{}}{\filterset {\thenprop {\prop{}}} {\elseprop {\prop{}}}}
+  \isacompare{\s{}}{\object{}}{\ty{}}{\filterset {\thenprop {\prop{}}} {\elseprop {\prop{}}}}
 }
 { \judgementrewrite {\propenv{}} {\isaapp {\e{}} {\ep{}}}
                                     {\Boolean{}}
@@ -1087,13 +1087,13 @@
   \ \ \ %\\
   \judgementtworewrite {\propenv{}} {\e{k}} {\Value{\kw{}}} {\ep{k}}
   \ \ \ %\\
-  \judgementtworewrite {\propenv{}} {\e{v}} {\t{}} {\ep{v}}
+  \judgementtworewrite {\propenv{}} {\e{v}} {\ty{}} {\ep{v}}
    \ \ \ %\\
   {\kw{}} \not\in {\absent{}}
 }
 { \judgementrewrite {\propenv{}} 
              {\assocexp {\e{}} {\e{k}} {\e{v}}}
-                       {\HMapgeneric {\extendmandatoryset {\mandatory{}}{\kw{}}{\t{}}} {\absent}}
+                       {\HMapgeneric {\extendmandatoryset {\mandatory{}}{\kw{}}{\ty{}}} {\absent}}
              {\filterset {\topprop{}} {\botprop{}}}
              {\emptyobject{}}
              {\assocexp {\ep{}} {\ep{k}} {\ep{v}}}
@@ -1110,9 +1110,9 @@
   \ \ \ %\\
   \judgementtworewrite {\propenv{}} {\e{k}} {\Value {k}} {\ep{k}}
   \ \ \ %\\
-             {\overrightarrow{\inmandatory{\kw{}}{\t{}}{\mandatory{}}}}^i
+             {\overrightarrow{\inmandatory{\kw{}}{\ty{}}{\mandatory{}}}}^i
        }
-{ \judgementrewrite {\propenv{}} {\getexp {\e{}} {\e{k}}} {\Unionsplice {{\overrightarrow {\t{}}}^i}}
+{ \judgementrewrite {\propenv{}} {\getexp {\e{}} {\e{k}}} {\Unionsplice {{\overrightarrow {\ty{}}}^i}}
              {\filterset {\topprop{}} {\topprop{}}}
              {\replacefor {\pth {\keype{k}} {\x{}}}
                           {\object{}}
@@ -1152,7 +1152,7 @@
          \\
   \judgementtworewrite {\propenv{}} {\e{k}} {\Value {k}} {\ep{k}}
              \\
-             {\notinmandatory{\kw{}}{\t{}}{\mandatory{}}}
+             {\notinmandatory{\kw{}}{\ty{}}{\mandatory{}}}
              \\
              {\notinabsent{\kw{}}{\absent{}}}
        }
@@ -1209,8 +1209,8 @@
 
 % common Syntax
 \newcommand\occurrencetypingsyntax[0]{
-  \prop{}       &::=& {\isprop {\t{}} {\pth {\pathelem{}} {\x{}}}}
-                      \alt {\notprop {\t{}} {\pth {\pathelem{}} {\x{}}}}
+  \prop{}       &::=& {\isprop {\ty{}} {\pth {\pathelem{}} {\x{}}}}
+                      \alt {\notprop {\ty{}} {\pth {\pathelem{}} {\x{}}}}
                       \alt {\impprop {\prop{}} {\prop{}}}
                       \alt {\andprop {\prop{}} {\prop{}}}
                       \alt {\orprop {\prop{}} {\prop{}}}
@@ -1331,8 +1331,8 @@
 \infer [B-Abs]
 {}
 { \opsem {\openv{}}
-         {\abs {\x{}} {\t{}} {\e{}}}
-         {\closure {\openv{}} {\abs {\x{}} {\t{}} {\e{}}}}}
+         {\abs {\x{}} {\ty{}} {\e{}}}
+         {\closure {\openv{}} {\abs {\x{}} {\ty{}} {\e{}}}}}
      }
 
 \newcommand\BIsA[0]{
@@ -1350,7 +1350,7 @@
 \infer [B-BetaClosure]
 { \opsem {\openv{}}
          {\e{f}}
-         {\closure {\openv{c}} {\abs {\x{}} {\t{}} {\e{b}}}}
+         {\closure {\openv{c}} {\abs {\x{}} {\ty{}} {\e{b}}}}
          \\\\
   \opsem {\openv{}}
          {\e{a}}
@@ -1430,7 +1430,7 @@ $$
   \v{} = {\multi {\v{d}} {\emptydisptable}}
 }
 {\opsem {\openv{}}
-        {\createmultiexp {\t{}}
+        {\createmultiexp {\ty{}}
                          {\e{}}}
         {\v{}}
 }
@@ -1601,14 +1601,14 @@ $$
 \newcommand\SRefl[0]{
 \infer [S-Refl]
 {}
-{ \issubtypein {} {\t{}} {\t{}}}
+{ \issubtypein {} {\ty{}} {\ty{}}}
 }
 
 \newcommand\SPMultiFn[0]{
 \infer [S-PMultiFn]
 { \issubtypein {}
   {\s{t}}
-  {\ArrowOne {\x{}} {\s{}} {\t{}}
+  {\ArrowOne {\x{}} {\s{}} {\ty{}}
                                   {\filterset {\thenprop {\prop{}}}
                                               {\elseprop {\prop{}}}}
                                       {\object{}}}
@@ -1621,7 +1621,7 @@ $$
                                       {\objectp{}}}
 }
 { \issubtypein {} {\MultiFntype{\s{t}}{\s{d}}}
-                  {\ArrowOne {\x{}} {\s{}} {\t{}}
+                  {\ArrowOne {\x{}} {\s{}} {\ty{}}
                              {\filterset {\thenprop {\prop{}}}
                                          {\elseprop {\prop{}}}}
                              {\object{}}}}
@@ -1630,20 +1630,20 @@ $$
 \newcommand\STop[0]{
 \infer [S-Top]
 {}
-{ \issubtypein {} {\t{}} {\Top{}}}
+{ \issubtypein {} {\ty{}} {\Top{}}}
 }
 
 % FIXME fix overrightarrow caption
 \newcommand\SUnionSuper[0]{
 \infer [S-UnionSuper]
-{ \exists i.\ {\issubtypein {} {\t{}} {\s{i}}}}
-{ \issubtypein {} {\t{}} {\Unionsplice{{\overrightarrow{\s{}}}^{i}}}}
+{ \exists i.\ {\issubtypein {} {\ty{}} {\s{i}}}}
+{ \issubtypein {} {\ty{}} {\Unionsplice{{\overrightarrow{\s{}}}^{i}}}}
 }
 
 \newcommand\SUnionSub[0]{
 \infer [S-UnionSub]
-{ {\overrightarrow {\issubtypein {} {\t{i}} {\s{}}}}^{i}}
-{ \issubtypein {} {\Unionsplice{\overrightarrow{\t{}}^{i}}} {\s{}}}
+{ {\overrightarrow {\issubtypein {} {\ty{i}} {\s{}}}}^{i}}
+{ \issubtypein {} {\Unionsplice{\overrightarrow{\ty{}}^{i}}} {\s{}}}
 }
 
 \newcommand\SFunMono[0]{
@@ -1651,7 +1651,7 @@ $$
 {}
 {\issubtypein {}
   {\ArrowOne {\x{}} {\s{}}
-             {\t{}}
+             {\ty{}}
              {\filterset {\thenprop{\prop{}}}
                          {\elseprop{\prop{}}}}
              {\object{}}}
@@ -1703,7 +1703,7 @@ $$
 \infer [S-Fun]
 { \issubtypein {} {\sp{}} {\s{}}
   \\
-  \issubtypein {} {\t{}} {\tp{}}
+  \issubtypein {} {\ty{}} {\tp{}}
   \\
   \inpropenv {\thenprop {\prop{}}} {\thenprop {\propp{}}}
   \\
@@ -1713,7 +1713,7 @@ $$
 }
 { \issubtypein {}
     {\ArrowOne {\x{}} {\s{}}
-              {\t{}}
+              {\ty{}}
               {\filterset {\thenprop {\prop{}}}
                           {\elseprop {\prop{}}}}
               {\object{}}}
@@ -1755,22 +1755,22 @@ $$
 
 \newcommand\SHMapP[0]{
 \infer [S-HMapP]
-{ \forall i.\ {\inmandatory{\k{i}}{\s{i}}{\mandatory{}}} \text{ and } \issubtypein {} {\s{i{}}} {\t{i{}}}
+{ \forall i.\ {\inmandatory{\k{i}}{\s{i}}{\mandatory{}}} \text{ and } \issubtypein {} {\s{i{}}} {\ty{i{}}}
 }
 {\issubtypein {} 
   {\HMapcwithabsent {\mandatory{}}{\absentp{}}}
-  {\HMapp {{\mandatorysetoverright{\kw{}}{\t{}}}^i} {\absent{}}}
+  {\HMapp {{\mandatorysetoverright{\kw{}}{\ty{}}}^i} {\absent{}}}
                }
 }
 
 \newcommand\SHMap[0]{
 \infer [S-HMap]
-{ \forall i.\ {\inmandatory{\k{i}}{\s{i}}{\mandatory{}}} \text{ and } \issubtypein {} {\s{i{}}} {\t{i{}}}
+{ \forall i.\ {\inmandatory{\k{i}}{\s{i}}{\mandatory{}}} \text{ and } \issubtypein {} {\s{i{}}} {\ty{i{}}}
   \\
   {\absent{1}} \supseteq {\absent{2}}
 }
 {\issubtypein {} {\HMapgeneric {\mandatory{}} {\absent{1}}}
-  {\HMapgeneric {{\mandatorysetoverright{\kw{}}{\t{}}}^i} {\absent{2}}}
+  {\HMapgeneric {{\mandatorysetoverright{\kw{}}{\ty{}}}^i} {\absent{2}}}
                }
              }
 
@@ -1794,7 +1794,7 @@ $$
 \infer [S-PMultiFn]
 { \issubtypein {}
   {\s{t}}
-  {\ArrowOne {\x{}} {\s{}} {\t{}}
+  {\ArrowOne {\x{}} {\s{}} {\ty{}}
                                   {\filterset {\thenprop {\prop{}}}
                                               {\elseprop {\prop{}}}}
                                       {\object{}}}
@@ -1807,7 +1807,7 @@ $$
                                       {\objectp{}}}
 }
 { \issubtypein {} {\MultiFntype{\s{t}}{\s{d}}}
-                  {\ArrowOne {\x{}} {\s{}} {\t{}}
+                  {\ArrowOne {\x{}} {\s{}} {\ty{}}
                              {\filterset {\thenprop {\prop{}}}
                                          {\elseprop {\prop{}}}}
                              {\object{}}}}
@@ -1815,13 +1815,13 @@ $$
 \infer [S-PMulti]
 { \issubtypein {} {\s{}} {\sp{}}
   \\
-  \issubtypein {} {\t{}} {\tp{}}}
-{ \issubtypein {} {\MultiFntype {\s{}} {\t{}}}{\MultiFntype {\sp{}} {\tp{}}}}
+  \issubtypein {} {\ty{}} {\tp{}}}
+{ \issubtypein {} {\MultiFntype {\s{}} {\ty{}}}{\MultiFntype {\sp{}} {\tp{}}}}
 
 \infer [S-MultiMono]
 {}
 {\issubtypein {}
-  {\MultiFntype {\ArrowOne {\x{}} {\s{}} {\t{}}
+  {\MultiFntype {\ArrowOne {\x{}} {\s{}} {\ty{}}
                           {\filterset {\thenprop{\prop{}}}
                                       {\elseprop{\prop{}}}}
                           {\object{}}}
@@ -1861,7 +1861,7 @@ $$
                    {\x{}}}
                    & \text{if}\ {\singletonmeta{}} \not= \class{}
                \\
-  \isacomparealign{\s{}}{\object{}}{\t{}}
+  \isacomparealign{\s{}}{\object{}}{\ty{}}
                   {\filterset{\topprop{}}
                              {\topprop{}}}
                            &\text{otherwise}
@@ -1877,14 +1877,14 @@ $$
              }
              % NOTE copied into multimethod syntax figure
 \newcommand\multimethodexpsyntax[0]{
-  {\createmultiexp {\t{}} {\e{}}}
+  {\createmultiexp {\ty{}} {\e{}}}
                       \alt {\extendmultiexp {\e{}} {\e{}} {\e{}}}
                       \alt {\isaapp {\e{}} {\e{}}}
               }
 
 % HMap syntax auxiliary 
 \newcommand\auxhmapsyntax[0]{
-  \mandatory{} &::=& \mandatorysetoverright{\kw{}}{\t{}}
+  \mandatory{} &::=& \mandatorysetoverright{\kw{}}{\ty{}}
                 &\mbox{HMap mandatory entries} \\
   \absent{} &::=& \absentoverright{\kw{}}
                 &\mbox{HMap absent entries} \\
@@ -2108,8 +2108,8 @@ $$
            {\ep{}}
 }
 { \rewrite {\taenv{}}
-           {\abs {\x{}} {\t{}} {\e{}}}
-           {\abs {\x{}} {\t{}} {\ep{}}}
+           {\abs {\x{}} {\ty{}} {\e{}}}
+           {\abs {\x{}} {\ty{}} {\ep{}}}
          }
        }
 
@@ -2260,7 +2260,7 @@ $$
 }
 
 \newcommand\soundnesslemmahypothesis[0]{
-If \judgementshowrewrite{\propenv{}}{\ep{}}{\t{}}{\filterset{\thenprop{\prop{}}}{\elseprop{\prop{}}}}{\object{}}{\e{}},
+If \judgementshowrewrite{\propenv{}}{\ep{}}{\ty{}}{\filterset{\thenprop{\prop{}}}{\elseprop{\prop{}}}}{\object{}}{\e{}},
 \satisfies{\openv{}}{\propenv{}}, 
 \isconsistent{\openv{}},
 and \opsem {\openv{}} {\e{}} {\a{}} 
@@ -2273,7 +2273,7 @@ and all of the following hold:
   \item either \object{} = \emptyobject{} or \inopenv {\openv{}} {\object{}} {\v{}},
   \item either {\istrueval{\v{}}} and {\satisfies{\openv{}}{\thenprop{\prop{}}}} or 
                {\isfalseval{\v{}}} and {\satisfies{\openv{}}{\elseprop{\prop{}}}},
-  \item \judgementrewrite{}{\v{}}{\t{}}{\filterset{\thenprop{\propp{}}}{\elseprop{\propp{}}}}{\objectp{}}{\v{}}
+  \item \judgementrewrite{}{\v{}}{\ty{}}{\filterset{\thenprop{\propp{}}}{\elseprop{\propp{}}}}{\objectp{}}{\v{}}
         for some \thenprop{\propp{}}, \elseprop{\propp{}} and {\objectp{}}, and
   \item \consistentwith{\v{}}{\openv{}}, or
 \end{enumerate}
@@ -2284,9 +2284,9 @@ and all of the following hold:
 }
 
 \newcommand\soundnesstheorembody[1]{
-If \judgementshowrewrite{\propenv{}}{\ep{}}{\t{}}{\filterset{\thenprop{\prop{}}}{\elseprop{\prop{}}}}{\object{}}{\e{}}
+If \judgementshowrewrite{\propenv{}}{\ep{}}{\ty{}}{\filterset{\thenprop{\prop{}}}{\elseprop{\prop{}}}}{\object{}}{\e{}}
 and \opsem {\openv{}} {\e{}} {\v{}} 
-then \judgementrewrite{}{\v{}}{\t{}}{\filterset{\thenprop{\propp{}}}{\elseprop{\propp{}}}}{\objectp{}}{\v{}}
+then \judgementrewrite{}{\v{}}{\ty{}}{\filterset{\thenprop{\propp{}}}{\elseprop{\propp{}}}}{\objectp{}}{\v{}}
         for some \thenprop{\propp{}}, \elseprop{\propp{}} and {\objectp{}}.
       }
 
@@ -2310,7 +2310,7 @@ then \judgementrewrite{}{\v{}}{\t{}}{\filterset{\thenprop{\propp{}}}{\elseprop{\
 }
 
 \newcommand\wrongtheorembody[1]{
-  If {\judgementshowrewrite {} {\ep{}} {\t{}} {\filterset {\thenprop{\prop{}}}{\elseprop{\prop{}}}} {\object{}}{\e{}}}
+  If {\judgementshowrewrite {} {\ep{}} {\ty{}} {\filterset {\thenprop{\prop{}}}{\elseprop{\prop{}}}} {\object{}}{\e{}}}
   then \notopsem{}{\e{}}{\wrong{}}.
 }
 
@@ -2328,7 +2328,7 @@ then \judgementrewrite{}{\v{}}{\t{}}{\filterset{\thenprop{\propp{}}}{\elseprop{\
 
 \begin{proof}
   Corollary of lemma~\ref{#1:lemma:soundness}, since by lemma~\ref{#1:lemma:soundness}
-  when {\judgementshowrewrite {} {\ep{}} {\t{}} {\filterset {\thenprop{\prop{}}}{\elseprop{\prop{}}}} {\object{}}{\e{}}}, 
+  when {\judgementshowrewrite {} {\ep{}} {\ty{}} {\filterset {\thenprop{\prop{}}}{\elseprop{\prop{}}}} {\object{}}{\e{}}}, 
  either
     \opsem {} {\e{}} {\v{}} or
     \opsem {} {\e{}} {\errorvalv{}}, therefore \notopsem{}{\e{}}{\wrong{}}.
@@ -2337,7 +2337,7 @@ then \judgementrewrite{}{\v{}}{\t{}}{\filterset{\thenprop{\propp{}}}{\elseprop{\
 }
 
 \newcommand\nilinvoketheorembody[1]{
-  If \judgement{\propenv{}}{\e{}}{\t{}}{\filterset{\thenprop{\prop{}}}{\elseprop{\prop{}}}}{\object{}} then \e{} is not
+  If \judgement{\propenv{}}{\e{}}{\ty{}}{\filterset{\thenprop{\prop{}}}{\elseprop{\prop{}}}}{\object{}} then \e{} is not
   \appexp{\nil{}}{\ep{}}, 
   \fieldexp{\fld{}}{\nil{}}, or
   $\methodexp{\mth{}}{\nil{}}{\overrightarrow{\ep{}}}$.
@@ -2367,8 +2367,8 @@ then \judgementrewrite{}{\v{}}{\t{}}{\filterset{\thenprop{\propp{}}}{\elseprop{\
   iff 
   \begin{itemize}
     \item $\forall$ \closure{\openv{1}}{\abs{\x{}}{\s{}}{\e{}}} in \v{},
-          if \judgementselfrewrite{}{\closure{\openv{1}}{\abs{\x{}}{\s{}}{\e{}}}}{\t{}}{\filterset{\topprop{}}{\botprop{}}}{\emptyobject{}},
-  and $\forall$ \objectp{} in \t{}, either 
+          if \judgementselfrewrite{}{\closure{\openv{1}}{\abs{\x{}}{\s{}}{\e{}}}}{\ty{}}{\filterset{\topprop{}}{\botprop{}}}{\emptyobject{}},
+  and $\forall$ \objectp{} in \ty{}, either 
       \objectp{} = \emptyobject{}, or 
       \objectp{} = {\pth{\pathelemp{}}{\x{}}},
       or 
@@ -2445,8 +2445,8 @@ $$
 }
 
 \newcommand\converttctype[0]{
-\tctojavaalign {\t{}} {\class{}}
-& \text{if}\ {\issubtypein{}{\t{}}{\javatotcnilexp{\class{}}}}
+\tctojavaalign {\ty{}} {\class{}}
+& \text{if}\ {\issubtypein{}{\ty{}}{\javatotcnilexp{\class{}}}}
 }
 
 % convert Java types
@@ -2475,60 +2475,60 @@ $$
               }
 
 \newcommand\updatefigure[0]{
-\update{\Unionsplice{\overr{\t{}}}}{\propisnotmeta{}}{\pathelem{}}
+\update{\Unionsplice{\overr{\ty{}}}}{\propisnotmeta{}}{\pathelem{}}
 &=&
-\Unionsplice{{\overrightarrow{\update{\t{}}{\propisnotmeta{}}{\pathelem{}}}}}
+\Unionsplice{{\overrightarrow{\update{\ty{}}{\propisnotmeta{}}{\pathelem{}}}}}
 \\
 % ClassPE
-\update{\t{}}{\Value{\class{}}}{\destructpath{\pathelem{}}{\classpe{}}}
-&=& \update{\t{}}{\class{}}{\pathelem{}}
+\update{\ty{}}{\Value{\class{}}}{\destructpath{\pathelem{}}{\classpe{}}}
+&=& \update{\ty{}}{\class{}}{\pathelem{}}
 
 % handles updating the else branch in (if (isa? (class x) C) ...), don't need it
 %\\
-%\update{\t{}}{\nottype{\Value{\class{}}}}{\destructpath{\pathelem{}}{\classpe{}}}
-%&=& \update{\t{}}{\nottype{\class{}}}{\pathelem{}}
+%\update{\ty{}}{\nottype{\Value{\class{}}}}{\destructpath{\pathelem{}}{\classpe{}}}
+%&=& \update{\ty{}}{\nottype{\class{}}}{\pathelem{}}
 %& \text{if}\ \not\exists \classp{}.\ {\issubtypein{}{\classp{}}{\class{}}}\ \text{and}\ {\classp{}} \not= \class{}
 
 % These 4 cases are fun but not necessary, handle using `class` to test for nullability
 %\\
-%\update{\t{}}{\s{}}{\destructpath{\pathelem{}}{\classpe{}}}
-%&=& \update{\t{}}{\Object}{\pathelem{}}
+%\update{\ty{}}{\s{}}{\destructpath{\pathelem{}}{\classpe{}}}
+%&=& \update{\ty{}}{\Object}{\pathelem{}}
 %& \text{if}\ \issubtypein{}{\s{}}{\Object{}}
 %\\
-%\update{\t{}}{\nottype{\s{}}}{\destructpath{\pathelem{}}{\classpe{}}}
-%&=& \update{\t{}}{\Nil{}}{\pathelem{}}
+%\update{\ty{}}{\nottype{\s{}}}{\destructpath{\pathelem{}}{\classpe{}}}
+%&=& \update{\ty{}}{\Nil{}}{\pathelem{}}
 %& \text{if}\ \issubtypein{}{\Object{}}{\s{}}
 %\\
-%\update{\t{}}{\s{}}{\destructpath{\pathelem{}}{\classpe{}}}
-%&=& \update{\t{}}{\Nil}{\pathelem{}}
+%\update{\ty{}}{\s{}}{\destructpath{\pathelem{}}{\classpe{}}}
+%&=& \update{\ty{}}{\Nil}{\pathelem{}}
 %& \text{if}\ \issubtypein{}{\s{}}{\Nil{}}
 %\\
-%\update{\t{}}{\nottype{\s{}}}{\destructpath{\pathelem{}}{\classpe{}}}
-%&=& \update{\t{}}{\Object}{\pathelem{}}
+%\update{\ty{}}{\nottype{\s{}}}{\destructpath{\pathelem{}}{\classpe{}}}
+%&=& \update{\ty{}}{\Object}{\pathelem{}}
 %& \text{if}\ \issubtypein{}{\Nil{}}{\s{}}
 
 % What if \s{} is a union of class singletons?
 % this just seems wrong
 %\\
-%\update{\t{}}{\s{}}{\classpe{}}
-%&=& \restrict{\t{}}{\s{}}
+%\update{\ty{}}{\s{}}{\classpe{}}
+%&=& \restrict{\ty{}}{\s{}}
 %
 %\\
-%\update{\t{}}{\nottype{\s{}}}{\classpe{}}
-%&=& \remove{\t{}}{\s{}}
+%\update{\ty{}}{\nottype{\s{}}}{\classpe{}}
+%&=& \remove{\ty{}}{\s{}}
 
 % Don't need base case covers \Top
 \\
-\update{\t{}}{\propisnotmeta{}}{\destructpath {\pathelem{}} {\classpe{}}}
-&=& {\t{}}
+\update{\ty{}}{\propisnotmeta{}}{\destructpath {\pathelem{}} {\classpe{}}}
+&=& {\ty{}}
 
 % keype
 \\
 \update{\HMapgeneric {\mandatory{}} {\absent{}}}{\propisnotmeta{}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
 &=&
-{\HMapgeneric {\extendmandatoryset{\mandatory{}}{\kw{}}{\update{\t{}}{\propisnotmeta{}}{\pathelem{}}}}{\absent{}}}
+{\HMapgeneric {\extendmandatoryset{\mandatory{}}{\kw{}}{\update{\ty{}}{\propisnotmeta{}}{\pathelem{}}}}{\absent{}}}
 \\
-&& \text{if}\ {\inmandatory{\kw{}}{\t{}}{\mandatory{}}}
+&& \text{if}\ {\inmandatory{\kw{}}{\ty{}}{\mandatory{}}}
 %& Present Key
 
 \\
@@ -2539,16 +2539,16 @@ $$
 
 % both these cases are summarised by the above, which uses negation subtyping
 %\\
-%\update{\HMapgeneric {\mandatory{}} {\absent{}}}{\t{}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
+%\update{\HMapgeneric {\mandatory{}} {\absent{}}}{\ty{}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
 %&=&
 %{\Bottom{}}
-%& \text{if}\ {\notsubtypein {} {\Nil{}} {\t{}}}\ \text{and}\ {\inabsent{\kw{}}{\absent{}}}
+%& \text{if}\ {\notsubtypein {} {\Nil{}} {\ty{}}}\ \text{and}\ {\inabsent{\kw{}}{\absent{}}}
 %%& Bad absent +
 %\\
-%\update{\HMapgeneric {\mandatory{}} {\absent{}}}{\nottype{\t{}}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
+%\update{\HMapgeneric {\mandatory{}} {\absent{}}}{\nottype{\ty{}}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
 %&=&
 %{\Bottom{}}
-%& \text{if}\ {\issubtypein {} {\Nil{}} {\t{}}}\ \text{and}\ {\inabsent{\kw{}}{\absent{}}}
+%& \text{if}\ {\issubtypein {} {\Nil{}} {\ty{}}}\ \text{and}\ {\inabsent{\kw{}}{\absent{}}}
 %%& Bad absent -
 
 % this rule doesn't do much, turned into default rule
@@ -2560,15 +2560,15 @@ $$
 %%& Consistent absent
 
 \\
-\update{\HMapp {\mandatory{}} {\absent{}}}{\t{}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
+\update{\HMapp {\mandatory{}} {\absent{}}}{\ty{}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
 &=&
 (\cup\ {\HMapp {\extendmandatoryset {\mandatory{}} {\kw{}}
-                                     {\t{}}}
+                                     {\ty{}}}
                 {\absent{}}}
           \\&&\ \ \ \ \, \,
         {\HMapp {\mandatory{}} {\extendabsentset{\absent{}}{\kw{}}}})
         \\
-&& \text{if}\ {\issubtypein {} {\Nil{}} {\t{}}},\ {\notinmandatory{\kw{}}{\s{}}{\mandatory{}}}\ \text{and}\ {\notinabsent{\kw{}}{\absent{}}}
+&& \text{if}\ {\issubtypein {} {\Nil{}} {\ty{}}},\ {\notinmandatory{\kw{}}{\s{}}{\mandatory{}}}\ \text{and}\ {\notinabsent{\kw{}}{\absent{}}}
 \\
 \update{\HMapp {\mandatory{}} {\absent{}}}{\propisnotmeta{}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
 &=&
@@ -2582,47 +2582,47 @@ $$
 %&=&
 %{\HMapp {\extendmandatoryset {\mandatory{}} {\kw{}}{\update{\Top}{\propisnotmeta{}}{\pathelem{}}}} {\absent{}}}
 \\
-\update{\t{}}{\propisnotmeta{}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
+\update{\ty{}}{\propisnotmeta{}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
 &=&
-{\t{}}
+{\ty{}}
 %& Consistent absent
 
 
 \\
-\update{\t{}}{\s{}}{\emptypath{}}
+\update{\ty{}}{\s{}}{\emptypath{}}
 &=&
-\restrict{\t{}}{\s{}}
+\restrict{\ty{}}{\s{}}
 \\
-\update{\t{}}{\nottype{\s{}}}{\emptypath{}}
+\update{\ty{}}{\nottype{\s{}}}{\emptypath{}}
 &=&
-\remove{\t{}}{\s{}}
+\remove{\ty{}}{\s{}}
 
               }
 
 \newcommand\restrictfigure[0]{
-\restrict{\t{}} {\s{}} &=& \Bot{} &
+\restrict{\ty{}} {\s{}} &=& \Bot{} &
                        \text{if} \not\exists \v{}.\  
-                          {\judgement {} {\v{}} {\t{}} {\prop{}}{\object{}}}
+                          {\judgement {} {\v{}} {\ty{}} {\prop{}}{\object{}}}
                           \ \text{and}\ 
                           {\judgement {} {\v{}} {\s{}} {\propp{}}{\objectp{}}}
                           %handled by update
 %                          \\
-%\restrict{\Unionsplice{\overrightarrow{{\t{}}}}}{\s{}} &=& 
-%\Unionsplice{\overrightarrow{\restrict{{\t{}}}{\s{}}}}
+%\restrict{\Unionsplice{\overrightarrow{{\ty{}}}}}{\s{}} &=& 
+%\Unionsplice{\overrightarrow{\restrict{{\ty{}}}{\s{}}}}
 \\
-\restrict{\t{}}{\s{}} &=& {\t{}} & \text{if}\ {\issubtypein {} {\t{}} {\s{}}}
+\restrict{\ty{}}{\s{}} &=& {\ty{}} & \text{if}\ {\issubtypein {} {\ty{}} {\s{}}}
 \\
-\restrict{\t{}}{\s{}} &=& {\s{}} & \text{otherwise}
+\restrict{\ty{}}{\s{}} &=& {\s{}} & \text{otherwise}
 }
 
 \newcommand\removefigure[0]{
-\remove{\t{}}{\s{}} &=& {\Bot{}} & \text{if}\ {\issubtypein {} {\t{}} {\s{}}}
+\remove{\ty{}}{\s{}} &=& {\Bot{}} & \text{if}\ {\issubtypein {} {\ty{}} {\s{}}}
 % handled by update
 %\\
-%\remove{\Unionsplice{\overrightarrow{{\t{}}}}}{\s{}} &=& 
-%\Unionsplice{\overrightarrow{\remove{{\t{}}}{\s{}}}}
+%\remove{\Unionsplice{\overrightarrow{{\ty{}}}}}{\s{}} &=& 
+%\Unionsplice{\overrightarrow{\remove{{\ty{}}}{\s{}}}}
 \\
-\remove{\t{}}{\s{}} &=& {\t{}} & \text{otherwise}
+\remove{\ty{}}{\s{}} &=& {\ty{}} & \text{otherwise}
 }
 
 \newcommand\restrictremovefigure[0]{
@@ -2661,7 +2661,7 @@ $$
 \begin{array}{lllr}
 \constantopsem{\classconst{}}{\classvalue{\class{}} {\overrightarrow {\classfieldpair{\fld{}} {\v{}}}}} &=& \class{}\\
 \constantopsem{\classconst{}}{\class{}} &=& \Class{}\\
-\constantopsem{\classconst{}}{\closure {\openv{}} {\abs {\x{}} {\t{}} {\e{}}}} &=& \IFn{}\\
+\constantopsem{\classconst{}}{\closure {\openv{}} {\abs {\x{}} {\ty{}} {\e{}}}} &=& \IFn{}\\
 \constantopsem{\classconst{}}{\multi {\v{d}} {\disptable{}}} &=& \PMulti{}\\
 \constantopsem{\classconst{}}{\mapval{}} &=& \HMapInstance{}\\
 \constantopsem{\classconst{}}{\kw{}} &=& \Keyword{}\\
@@ -2688,18 +2688,18 @@ $$
 % proof system
 \newcommand\LUpdate[0]{
 \infer [L-Update]
-{ \inpropenv {\propenv{}} {\isprop {\t{}} {\pth {\pathelemp{}} {\x{}}}}
+{ \inpropenv {\propenv{}} {\isprop {\ty{}} {\pth {\pathelemp{}} {\x{}}}}
 \\
   \inpropenv {\propenv{}} {\isprop {\propisnotmeta{}} {{\pathelem{}}({\pth {\pathelemp{}} {\x{}}})}}}
-{ \inpropenv {\propenv{}} {\isprop {\update {\t{}} {\propisnotmeta{}} {\pathelem{}}} {\pth {\pathelemp{}} {\x{}}}}}
+{ \inpropenv {\propenv{}} {\isprop {\update {\ty{}} {\propisnotmeta{}} {\pathelem{}}} {\pth {\pathelemp{}} {\x{}}}}}
 }
 
 \newcommand\LUpdatePos[0]{
 \infer [L-UpdatePos]
-{ \inpropenv {\propenv{}} {\isprop {\t{}} {\pth {\pathelemp{}} {\x{}}}}
+{ \inpropenv {\propenv{}} {\isprop {\ty{}} {\pth {\pathelemp{}} {\x{}}}}
 \\
   \inpropenv {\propenv{}} {\isprop {\s{}} {{\pathelem{}}({\pth {\pathelemp{}} {\x{}}})}}}
-{ \inpropenv {\propenv{}} {\isprop {\update {\t{}} {\s{}} {\pathelem{}}} {\pth {\pathelemp{}} {\x{}}}}}
+{ \inpropenv {\propenv{}} {\isprop {\update {\ty{}} {\s{}} {\pathelem{}}} {\pth {\pathelemp{}} {\x{}}}}}
 }
 
 \newcommand\TConst[0]{

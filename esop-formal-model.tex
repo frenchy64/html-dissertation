@@ -27,12 +27,12 @@ All binding forms introduce fresh variables---a subtle but important point since
 are not simply dictionaries.
 Values include booleans \bool{}, \nil{}, class literals {\class{}}, keywords \kw{},
 integers {\nat{}},
-constants {\const{}}, and strings \str{}. Lexical closures {\closure {\openv{}} {\abs {\x{}} {\t{}} {\e{}}}}
+constants {\const{}}, and strings \str{}. Lexical closures {\closure {\openv{}} {\abs {\x{}} {\ty{}} {\e{}}}}
 close value environments \openv{}---which map bindings to values---over functions.
 
-\paragraph{Types} Types \s{} or \t{} 
+\paragraph{Types} Types \s{} or \ty{} 
 include the top type \Top,
-\emph{untagged} unions {\Unionsplice {\overrightarrow{\t{}}}}, 
+\emph{untagged} unions {\Unionsplice {\overrightarrow{\ty{}}}}, 
 singletons ${\Value \singletonmeta{}}$,
 and class instances \class{}.
 We abbreviate the classes
@@ -56,12 +56,12 @@ like a keyword literal \makekw{a}, an instance of the type \Keyword{}.
 Function types 
 $
 {\ArrowOne {\x{}} {\s{}}
-             {\t{}}
+             {\ty{}}
              {\filterset {\prop{}} {\prop{}}}
              {\object{}}}
 $
 contain \emph{latent} (terminology from~\cite{Lucassen88polymorphiceffect}) propositions \prop{}, object \object{}, and return type
-\t{},
+\ty{},
 which may refer to the function argument \x{}.
 %Latent means they are relevant when the function is applied rather than evaluated.
 They are instantiated with the
@@ -96,18 +96,18 @@ track the types of variables, like in LC-Let and LC-Local.
                 {\e{1}} {\s{}}
   \\
   \judgementtwo {{\propenv{}},\x{} \mapsto {\s{}}}
-                {\e{2}} {\t{}}
+                {\e{2}} {\ty{}}
 }
 { 
   \judgementtwo {\propenv{}} 
-            {\letexp{\x{}}{\e{1}}{\e{2}}} {\t{}}
+            {\letexp{\x{}}{\e{1}}{\e{2}}} {\ty{}}
            }
 
 \infer [LC-Local]
-{ {\propenv{}}(\x{}) = {\t{}}
+{ {\propenv{}}(\x{}) = {\ty{}}
 }
 { \judgementtwo {\propenv{}} 
-            {\x{}} {\t{}}
+            {\x{}} {\ty{}}
            }
 \end{mathpar}
 \end{singlespacing}
@@ -127,28 +127,28 @@ variable $x$ is of type \s{}.
                 {\e{1}} {\s{}}
   \\
   \judgementtwo {{\propenv{}},\isprop{\s{}}{\x{}}}
-                {\e{2}} {\t{}}
+                {\e{2}} {\ty{}}
 }
 { 
   \judgementtwo {\propenv{}} 
             {\letexp{\x{}}{\e{1}}{\e{2}}}
-            {\t{}}
+            {\ty{}}
            }
 %\judgementtwo{\isprop{\Number{}}{\x{}}}{\appexp{\inc{}}{\x{}}}{\Number}
 
 \infer [T0-Local]
-{ \inpropenv {\propenv{}} {\isprop {\t{}} {\x{}}}}
+{ \inpropenv {\propenv{}} {\isprop {\ty{}} {\x{}}}}
 { \judgementtwo {\propenv{}} 
-            {\x{}} {\t{}}
+            {\x{}} {\ty{}}
            }
 \end{mathpar}
 \end{singlespacing}
 In T0-Local, 
 $
-{ \inpropenv {\propenv{}} {\isprop {\t{}}{\x{}}}}
+{ \inpropenv {\propenv{}} {\isprop {\ty{}}{\x{}}}}
 $
-appeals to the proof system to solve for \t{}.
-%says under logical assumptions {\propenv{}}, object {\pth{\pathelem{}}{\x{}}} is of type \t{}.
+appeals to the proof system to solve for \ty{}.
+%says under logical assumptions {\propenv{}}, object {\pth{\pathelem{}}{\x{}}} is of type \ty{}.
 %We later define the more general T-Local.
 
 \begin{figure}[t!]
@@ -158,7 +158,7 @@ $$
   \e{} &::=& \x{}
                       \alt \v{} 
                       \alt {\comb {\e{}} {\e{}}} 
-                      \alt {\abs {\x{}} {\t{}} {\e{}}} 
+                      \alt {\abs {\x{}} {\ty{}} {\e{}}} 
                       \alt {\ifexp {\e{}} {\e{}} {\e{}}}
                       %\alt {\trdiff{\doexp {\e{}} {\e{}}}}
                       \alt {\letexp {\x{}} {\e{}} {\e{}}}
@@ -168,14 +168,14 @@ $$
                       \alt {\nat{}}
                       \alt {\const{}}
                       \alt {\str{}}
-                      \alt {\closure {\openv{}} {\abs {\x{}} {\t{}} {\e{}}}}
+                      \alt {\closure {\openv{}} {\abs {\x{}} {\ty{}} {\e{}}}}
                 &\mbox{Values} \\
                 \constantssyntax{}\\
-  \s{}, \t{}    &::=& \Top 
-                      \alt {\Unionsplice {\overrightarrow{\t{}}}}
+  \s{}, \ty{}    &::=& \Top 
+                      \alt {\Unionsplice {\overrightarrow{\ty{}}}}
                       \alt
-                      {\ArrowOne {\x{}} {\t{}}
-                                   {\t{}}
+                      {\ArrowOne {\x{}} {\ty{}}
+                                   {\ty{}}
                                    {\filterset {\prop{}} {\prop{}}}
                                    {\object{}}}
                       \alt {\Value \singletonmeta{}} 
@@ -198,9 +198,9 @@ We further extend logical statements to \emph{propositional logic}.
 \figref{main:figure:termsyntax} describes the syntax
 for propositions \prop{},
 consisting of positive and negative \emph{type propositions} 
-about non-empty objects---{\isprop {\t{}} {\pth {\pathelem{}} {\x{}}}}
-and {\notprop {\t{}} {\pth {\pathelem{}} {\x{}}}}
-respectively---the latter pronounced ``the object {\pth {\pathelem{}} {\x{}}} is \emph{not} of type \t{}''.
+about non-empty objects---{\isprop {\ty{}} {\pth {\pathelem{}} {\x{}}}}
+and {\notprop {\ty{}} {\pth {\pathelem{}} {\x{}}}}
+respectively---the latter pronounced ``the object {\pth {\pathelem{}} {\x{}}} is \emph{not} of type \ty{}''.
 The other propositions are standard logical connectives: implications, conjunctions,
 disjunctions, and the trivial (\topprop{}) and impossible (\botprop{}) propositions.
 %
@@ -235,18 +235,18 @@ pronounced ``the ${\makekw{Meal}}$ path of variable \makelocal{o} is of type
 
 %\paragraph{Logical system in action} 
 To attain the type of \makelocal{o}, 
-we must solve for \t{} in
+we must solve for \ty{} in
 $
 { \inpropenv 
   {\propenv{}}
-  {\isprop {\t{}} {\makelocal{o}}}}
+  {\isprop {\ty{}} {\makelocal{o}}}}
 $,
 under proposition environment
 $
 \propenv{} = {{\isprop{\Order}{\makelocal{o}}},
     {\isprop{\Value{\makekw{combo}}}{\pth{\keype{\makekw{Meal}}}{\makelocal{o}}}}}
 $
-which deduces \t{} to be a {\makekw{combo}} meal.
+which deduces \ty{} to be a {\makekw{combo}} meal.
 The logical
 system \emph{combines} pieces of type information to deduce more accurate types for lexical
 bindings---this is explained in \secref{formalmodel:proofsystem}.
@@ -363,24 +363,24 @@ We formalize our system following Tobin-Hochstadt and Felleisen \cite{TF10}.
 The typing judgment 
 $
 {\judgementshowrewrite   {\propenv}
-              {\e{}} {\t{}}
+              {\e{}} {\ty{}}
   {\filterset {\thenprop {\prop{}}}
               {\elseprop {\prop{}}}}
   {\object{}}
   {\ep{}}}
 $
 says expression \e{} rewrites to \ep{}, which
-is of type \t{} in the 
+is of type \ty{} in the 
 proposition environment $\propenv{}$, with 
 `then' proposition {\thenprop {\prop{}}}, `else' proposition {\elseprop {\prop{}}}
 and object \object{}.
 For ease of presentation, we omit \ep{} when it is easily inferred.
 
 We write 
-{\judgementtworewrite{\propenv}{\e{}} {\t{}}{\ep{}} 
+{\judgementtworewrite{\propenv}{\e{}} {\ty{}}{\ep{}} 
 to mean 
 {\judgementshowrewrite   {\propenv}
-              {\e{}} {\t{}}
+              {\e{}} {\ty{}}
   {\filterset {\thenprop {\propp{}}}
               {\elseprop {\propp{}}}}
   {\objectp{}}
@@ -389,14 +389,14 @@ for some {\thenprop {\propp{}}}, {\elseprop {\propp{}}}
 and {\objectp{}}.
 %and abbreviate self rewriting judgements
 %{\judgementrewrite   {\propenv}
-%              {\e{}} {\t{}}
+%              {\e{}} {\ty{}}
 %  {\filterset {\thenprop {\prop{}}}
 %              {\elseprop {\prop{}}}}
 %  {\object{}}
 %  {\e{}}}
 %to
 %{\judgementselfrewrite   {\propenv}
-%              {\e{}} {\t{}}
+%              {\e{}} {\ty{}}
 %  {\filterset {\thenprop {\prop{}}}
 %              {\elseprop {\prop{}}}}
 %  {\object{}}}.
@@ -503,12 +503,12 @@ $$
   {\emptyobject{}}
 \end{array}
 $$
-%to suit the T-If outputs \t{} = \Boolean{}, \thenprop{\prop{}}
+%to suit the T-If outputs \ty{} = \Boolean{}, \thenprop{\prop{}}
 %= {\notprop{\Number{}}{\makelocal{d}}}, \elseprop{\prop{}} = {\isprop{\Number{}}{\makelocal{d}}},
 %and \object{} = {\emptyobject{}}.
 %
-%In T-Subsume, we can upcast \t{} = \False{} to \tp{} = \Boolean{} via the premise 
-%\issubtypein{}{\t{}}{\tp{}}.
+%In T-Subsume, we can upcast \ty{} = \False{} to \tp{} = \Boolean{} via the premise 
+%\issubtypein{}{\ty{}}{\tp{}}.
 %and 
 %\inpropenv {\propenv{}, {\elseprop {\prop{}}}} {\elseprop {\propp{}}}
 %from 
@@ -528,7 +528,7 @@ $$
 $$
 
 %The object \x{} over latent propositions \thenprop{\prop{}} and
-%\elseprop{\prop{}}, latent object \object{}, and latent type \t{}. The
+%\elseprop{\prop{}}, latent object \object{}, and latent type \ty{}. The
 %actual argument object---\objectp{}---is substituted in at application by T-App.
 
 
@@ -599,7 +599,7 @@ $$
 %and 
 %\inpropenv{\propenv{}}{\notprop{\Nil{}}{\x{}}}
 %to derive \inpropenv{\propenv{}}{\isprop{\Number}{\x{}}}.
-%(The metavariable \propisnotmeta{} ranges over \t{} and \nottype{\t{}} (without variables).)
+%(The metavariable \propisnotmeta{} ranges over \ty{} and \nottype{\ty{}} (without variables).)
 %We cover L-Update in more detail in \secref{sec:formalpaths}.
 %
 %Finally, this approach allows the type system to track
@@ -640,7 +640,7 @@ $$
 %\x{} to the expression used to instantiate \x{}, \ep{1}, via logical implications.
 %
 %The T-Local rule connects the type system to the proof system over type propositions
-%via \inpropenv {\propenv{}} {\isprop {\t{}} {\x{}}}
+%via \inpropenv {\propenv{}} {\isprop {\ty{}} {\x{}}}
 %to derive a type for a variable.
 %Using this rule, the type system can then appeal to L-Update to refine the type
 %assigned to \x{}.
@@ -719,12 +719,12 @@ semantics of \ifliteral{} (\figref{main:figure:coresemantics}).
 %  \footnotesize
 %%%   \judgbox{
 %%%{\judgementrewrite   {\propenv}
-%%%              {\e{}} {\t{}}
+%%%              {\e{}} {\ty{}}
 %%%  {\filterset {\thenprop {\prop{}}}
 %%%              {\elseprop {\prop{}}}}
 %%%  {\object{}}{\ep{}}}}
 %%%           {Under proposition environment $\propenv{}$, 
-%%%             expression \e{} is of type \t{}
+%%%             expression \e{} is of type \ty{}
 %%%             with  \\
 %%%
 %%%`then' proposition {\thenprop {\prop{}}}, `else' proposition {\elseprop {\prop{}}}
@@ -994,13 +994,13 @@ To check
 we first resolve the constructor overload in the class table---there is at most one
 to simplify presentation.
 With \classhint{1} = \String,
-we convert to a nilable type the argument with \t{1} = \Union{\Nil}{\String}
-and type check {\makestr{a/b}} against \t{1}.
+we convert to a nilable type the argument with \ty{1} = \Union{\Nil}{\String}
+and type check {\makestr{a/b}} against \ty{1}.
 Typed Clojure defaults to allowing non-nilable arguments, but this
 can be overridden, so we model the more general case.
 % which erases nil
 The return Java type \File is converted to a non-nil
-Typed Clojure type \t{} = \File for the return type,
+Typed Clojure type \ty{} = \File for the return type,
 and the propositions say constructors can never be false---constructors
 can never produce the internal boolean value that Clojure uses for \false{}, or \nil{}.
 Finally, the constructor rewrites to {\newstaticexp {\String} {\File{}} {\File{}} {\makestr{a/b}}}.
@@ -1019,7 +1019,7 @@ checks:
 
 We verify the target type \s{} = \File is non-nil by T-New.
 The overload is chosen from the class table based on \classhint{1} = \File---there is at most one.
-The nilable return type \t{} = \Union{\Nil}{\String} is given, and the 
+The nilable return type \ty{} = \Union{\Nil}{\String} is given, and the 
 entire expression rewrites to expression \ref{eq:resolved}.
 %
 %We allow arguments to constructors and methods to be nilable, but not method
@@ -1065,7 +1065,7 @@ rules that rewrite to reflective calls.
 %We do not specifically support \equivliteral{} in our calculus, 
 %but on keyword arguments it works identically to \clj{isa?} which we model
 %in \secref{sec:isaformal}.
-%Intuitively, if {\judgement{\propenv{}}{\e{}}{\t{}}{\filterset{\thenprop{\prop{}}}{\elseprop{\prop{}}}}{\object{}}}
+%Intuitively, if {\judgement{\propenv{}}{\e{}}{\ty{}}{\filterset{\thenprop{\prop{}}}{\elseprop{\prop{}}}}{\object{}}}
 %then \equivapp{\e{}}{\makekw{if}} has the true and false propositions
 %$$
 %{\replacefor{\filterset{\isprop{\Value{\makekw{if}}}{\x{}}}{\notprop{\Value{\makekw{if}}}{\x{}}}}{\object{}}{\x{}}}
@@ -1139,7 +1139,7 @@ is true if \x{} is a keyword, otherwise false.
 When checked with T-IsA,
 the object of the left subexpression \object{} = {\pth{\classpe{}}{\x{}}}
 (which starts with the {\classpe{}} path element)
-and the type of the right subexpression \t{} = {\Value{\Keyword}} (a singleton class type)
+and the type of the right subexpression \ty{} = {\Value{\Keyword}} (a singleton class type)
 together trigger the first \isacompareliteral{} case
 \isacompare{\s{}}{\pth{\classpe{}}{\x{}}}{\Value{\Keyword}}{\filterset{\isprop{\Keyword}{\x{}}}{\notprop{\Keyword}{\x{}}}},
 giving propositions that correspond to our informal description {\filterset{\thenprop{\prop{}}}{\elseprop{\prop{}}}} = {\filterset{\isprop{\Keyword}{\x{}}}{\notprop{\Keyword}{\x{}}}}.
@@ -1152,7 +1152,7 @@ when \x{} evaluates to {\makekw{en}}, otherwise it produces false.
 Using T-IsA,
 it has the propositions {\filterset{\thenprop{\prop{}}}{\elseprop{\prop{}}}} = 
 \isacompare{}{\x{}}{\Value{\makekw{en}}}{\filterset {\isprop {\Value{\makekw{en}}}{\x{}}}{\notprop{\Value{\makekw{en}}}{\x{}}}}
-since \object{} = {\x{}} and \t{} = {\Value{\makekw{en}}}.
+since \object{} = {\x{}} and \ty{} = {\Value{\makekw{en}}}.
 %
 The side condition on the second \isacompareliteral{} case ensures we are in equality mode---if \x{} can possibly be a class in 
 \isaapp{\x{}}{\Object{}}, \isacompareliteral{} uses its conservative default case,
@@ -1176,13 +1176,13 @@ The operational behavior of \isaliteral{} is given by B-IsA (\figref{main:figure
   %\footnotesize
 $$
 \begin{altgrammar}
-  \e{} &::=& \ldots \alt {\createmultiexp {\t{}} {\e{}}} \alt
+  \e{} &::=& \ldots \alt {\createmultiexp {\ty{}} {\e{}}} \alt
              {\extendmultiexp {\e{}} {\e{}} {\e{}}}
              \alt {\isaapp {\e{}} {\e{}}} &\mbox{Expressions} \\
   \v{} &::=& \ldots \alt {\multi {\v{}} {\disptable{}}}
                 &\mbox{Values} \\
  \disptablesyntax{} \\
-  \s{}, \t{} &::=& \ldots \alt {\MultiFntype{\t{}}{\t{}}}
+  \s{}, \ty{} &::=& \ldots \alt {\MultiFntype{\ty{}}{\ty{}}}
                 &\mbox{Types}
 \end{altgrammar}
 $$
@@ -1278,7 +1278,7 @@ verifies both the interface and dispatch type's domain agree.
 %$$
 %    \TDefMulti{}
 %$$
-Our example checks with \t{} = \Keyword, interface type \s{} = {\ArrowTwo{\x{}}{\Keyword}{\String}},
+Our example checks with \ty{} = \Keyword, interface type \s{} = {\ArrowTwo{\x{}}{\Keyword}{\String}},
 dispatch function type \sp{} = {\ArrowOne{\x{}}{\Keyword}{\Keyword}{\filterset{\topprop{}}{\topprop{}}}{\x{}}}, and overall type
 $
 {\MultiFntype {\ArrowTwo{\x{}}{\Keyword}{\String}}
@@ -1294,7 +1294,7 @@ The expression
 {\extendmultiexp {\e{m}} {\e{v}} {\e{f}}} creates a new multimethod
 that extends multimethod \e{m}'s dispatch table, mapping dispatch value
 \e{v} to method \e{f}. The T-DefMulti typing rule
-checks \e{m} is a multimethod with dispatch function type \t{d},
+checks \e{m} is a multimethod with dispatch function type \ty{d},
 then calculates the extra information we know based on the current
 dispatch value {\thenprop{\proppp{}}}, which is assumed when checking the method
 body.
@@ -1306,7 +1306,7 @@ $
 {\MultiFntype {\ArrowTwo{\x{}}{\Keyword}{\String}}
               {\ArrowOne{\x{}}{\Keyword}{\Keyword}{\filterset{\topprop{}}{\topprop{}}}{\x{}}}}
 $
-with \objectp{} = {\x{}} (from below the arrow on the right argument of the previous type) and \t{v} = \Value{\makekw{en}}. 
+with \objectp{} = {\x{}} (from below the arrow on the right argument of the previous type) and \ty{v} = \Value{\makekw{en}}. 
 Then {\thenprop{\proppp{}}} = 
 {\isprop {\Value{\makekw{en}}}{\x{}}}
 from
@@ -1315,13 +1315,13 @@ $
 {\filterset {\isprop {\Value{\makekw{en}}}{\x{}}}{\notprop{\Value{\makekw{en}}}{\x{}}}}
 $
 (see \secref{sec:isaformal}).
-Since \t{} = \Keyword{}, we check the method body with
+Since \ty{} = \Keyword{}, we check the method body with
 $$
 \judgement{{\isprop{\Keyword}{\x{}}},{\isprop {\Value{\makekw{en}}}{\x{}}}}
   {\makestr{hello}}
   {\String}{\filterset{\topprop{}}{\topprop{}}}{\emptyobject{}}\text{.}
 $$
-Finally from the interface type \t{m}, we know \thenprop{\prop{}} = \elseprop{\prop{}} = \topprop{},
+Finally from the interface type \ty{m}, we know \thenprop{\prop{}} = \elseprop{\prop{}} = \topprop{},
 and \object{} = \emptyobject{}, which also agrees with the method body, above.
 Notice the overall type of a \defmethodliteral{} is the same as its first subexpression \e{m}.
 
@@ -1350,7 +1350,7 @@ method is checked independently based on local type information.
 %      {\classconst{}}}
 %  {\MultiFntype {\s{}}{\sp{}}}{\filterset{\topprop{}}{\botprop{}}}{\emptyobject{}}
 %$$
-%where \s{}  = {\ArrowOne {\x{}} {\Top{}} {\t{}} {\filterset {\topprop{}} {\topprop{}}} {\emptyobject{}}}
+%where \s{}  = {\ArrowOne {\x{}} {\Top{}} {\ty{}} {\filterset {\topprop{}} {\topprop{}}} {\emptyobject{}}}
 %  and \sp{} = {\ArrowOne {\x{}} {\Top{}} {\Union{\Nil}{\Class}} {\filterset {\topprop{}} {\topprop{}}} {\pth{\classpe{}}{\x{}}}}.
 %  Since the parameter types agree, this is well-typed.
 %
@@ -1421,7 +1421,7 @@ and applies it to the original argument for the final result.
     &\mbox{Expressions} \\
     \v{} &::=& \ldots \alt {\emptymap{}}
     &\mbox{Values} \\
-    \t{} &::=& \ldots \alt {\HMapgeneric {\mandatory{}} {\absent{}}}
+    \ty{} &::=& \ldots \alt {\HMapgeneric {\mandatory{}} {\absent{}}}
     &\mbox{Types} \\
     \auxhmapsyntax{}\\
 %    \pesyntax{}   &::=& \ldots \alt {\keype{\kw{}}}
@@ -1595,8 +1595,8 @@ The semantics for \getliteral{} and \assocliteral{} are straightforward.
 \updatefigure{}
 \end{array}
 $$
-\caption{Type update (the metavariable \propisnotmeta{} ranges over \t{} and \nottype{\t{}} (without variables), 
-  \notsubtypein{}{\Nil{}}{\nottype{\t{}}} when \issubtypein{}{\Nil{}}{\t{}}, see
+\caption{Type update (the metavariable \propisnotmeta{} ranges over \ty{} and \nottype{\ty{}} (without variables), 
+  \notsubtypein{}{\Nil{}}{\nottype{\ty{}}} when \issubtypein{}{\Nil{}}{\ty{}}, see
 \figref{main:figure:restrictremove} for \restrictliteral{} and \removeliteral{}.
   )}
 \label{main:figure:update}
@@ -1626,11 +1626,11 @@ $$
 }
 
 It says
-under \propenv{}, if object \pth{\pathelemp{}}{\x{}} is of type \t{}, and 
+under \propenv{}, if object \pth{\pathelemp{}}{\x{}} is of type \ty{}, and 
 an extension
 \pth{\pathelem{}}{\pth{\pathelemp{}}{\x{}}}
 is of possibly-negative type \propisnotmeta{}, then
-{\update{\t{}}{\propisnotmeta{}}{\pathelem{}}}
+{\update{\ty{}}{\propisnotmeta{}}{\pathelem{}}}
 is \pth{\pathelemp{}}{\x{}}'s type under \propenv{}.
 
 Recall \egref{example:desserts-on-meal}.
@@ -1641,7 +1641,7 @@ $
 { \inpropenv 
   {{\isprop{\Order}{\makelocal{o}}},
     {\isprop{\Value{\makekw{combo}}}{\pth{\keype{\makekw{Meal}}}{\makelocal{o}}}}}
-  {\isprop {\t{}} {\makelocal{o}}}}
+  {\isprop {\ty{}} {\makelocal{o}}}}
 $
 uses L-Update, where \pathelem{} = {\emptypath{}} and \pathelemp{} = [{\keype{\makekw{Meal}}}].
 $$
@@ -1650,8 +1650,8 @@ $$
 Since {\Order} is a union of HMaps, we structurally recur on the first case of \updateliteral{}
 (\figref{main:figure:update}),
 which preserves \pathelem{}.
-Each initial recursion hits the first HMap case, since there is some \t{} such that
-{\inmandatory{\kw{}}{\t{}}{\mandatory{}}} and 
+Each initial recursion hits the first HMap case, since there is some \ty{} such that
+{\inmandatory{\kw{}}{\ty{}}{\mandatory{}}} and 
 \completenessmeta{} accepts partial maps \partial{}.
 
 To demonstrate,
@@ -1684,7 +1684,7 @@ The first \classpe{} case updates
 to \class{} if \classconst{} returns \Value{\class{}}.
 The second \keype{\kw{}} case detects contradictions in absent
 keys. % not overlapping with \Nil{}.
-The third \keype{\kw{}} case updates unknown entries to be mapped to \t{} or absent.
+The third \keype{\kw{}} case updates unknown entries to be mapped to \ty{} or absent.
 The fourth \keype{\kw{}} case updates unknown entries to be \emph{present}
 when they do not overlap with \Nil{}.
 
