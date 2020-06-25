@@ -2,13 +2,13 @@ all:
 	latexmk thesis.tex -pdf
 
 html-fast:
-	make4ht -um draft thesis.tex -c html-config.cfg
+	make4ht -d html -um draft thesis.tex -c html-config.cfg
 
 html:
 	# svg generation https://tex.stackexchange.com/a/399458
-	make4ht -um draft thesis.tex -c html-config.cfg
+	make4ht -d html -um draft thesis.tex -c html-config.cfg
 	biber thesis
-	make4ht -u thesis.tex -c html-config.cfg "svg"
+	make4ht -d html -u thesis.tex -c html-config.cfg "svg"
 
 mathjax:
 	# https://tex.stackexchange.com/a/68962
