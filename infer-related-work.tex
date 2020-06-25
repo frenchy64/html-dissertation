@@ -1,0 +1,223 @@
+\Dchapter{Related work\either{ to Automatic Annotations}{}}
+
+%The field of dynamic analysis has a rich history.
+%Ball~\cite{ball1999concept}
+%introduces frequency spectrum analysis,
+%an approach that observes a running program
+%that is similar to our instrumentation approach.
+%Mock~\cite{mock2003dynamic}
+%makes the case for efficient profiling of programs
+%to better facilitate usage of instrumentation.
+%
+%Value Profiling is another related area which characterises
+%programs based on their running entities.
+%
+%Daikon~\cite{ernst2001dynamically}
+%uses dynamic analysis to recover likely program invariants
+%in C programs.
+%
+%Dynamic type inference has been attempted in many different
+%areas.
+%Rubydust~\cite{An10dynamicinference}
+%infers static types for Ruby. They prove the generated types
+%sound, which we do not. 
+%\begin{verbatim}
+%Conversely, they do not generate
+%recursive types, but recursive types in ruby are probably
+%nominal, so how different are we?
+%\end{verbatim}
+%
+%In the context of JavaScript, several usages of this technique
+%can be found.
+%JSTrace~\cite{saftoiu2010jstrace}
+%generates types for (?).
+%Separately, work has been done to generate JSDoc-like annotations~\cite{odgaard2014}.
+%TypeDevil~\cite{pradel2015typedevil}
+%uses dynamic analysis to warn JavaScript programmers of possible inconsistencies
+%in their programs.
+%
+%Work in recovering context-free grammars is most related to our algorithm
+%to recover recursive types.
+%% TODO Shamir~\cite{shamir1962remark} notes that it is impossible
+%% TODO \cite{knobe1976method}
+%
+%In the context of machine learning, 
+%this area is called grammar induction or language learning.  % according to vcrepinvsek2005inferring
+%% TODO Wang\cite{wang1998grammar} summarises 
+%{\v{C}}repin{\v{s}}ek et. al~\cite{vcrepinvsek2005inferring}
+%use genetic programming to infer context-free grammars
+%for domain-specific languages.
+%Most work in this area assume both positive and negative
+%examples. We cannot distinguish between these two in
+%our system, so we assume all examples are positive.
+%
+%Chen~\cite{chen1995bayesian} uses Bayesian inference to converge
+%on a suitable grammar, given examples.
+%
+%There has been recent interest in approximate type inference.
+%
+%Pluquet et. al~\cite{marot2009fast} investigate heuristics
+%to quickly infer types in dynamic programs.
+%So does Milojkovi{\'c}
+%\cite{milojkovic2016exploring}.
+%Spasojevi{\'c} et. al~\cite{spasojevic2014mining}
+%compare types across a cross section of projects to improve
+%inference.
+%
+%Adamsen et. al~\cite{adamsen2016analyzing} verify test suite completeness using a hybrid approach of lightweight dependency analysis, static type checking and dynamic instrumentation.
+%
+%% Inference and Evolution of TypeScript Declaration Files
+%% - they submit pull requests from their tool's output
+%% https://cs.au.dk/~amoeller/papers/tstools/paper.pdf
+%
+%% Automatic TS annotations from JSON (including recursive types)
+%% https://github.com/shakyShane/json-ts
+
+\paragraph{Automatic annotations}
+There are two common implementation strategies for automatic annotation tools. The first
+strategy, ``ruling-out'' (for invariant detection), assumes all invariants are true 
+and then use runtime analysis results to rule out
+impossible invariants. The second ``building-up'' strategy (for dynamic type inference)
+assumes nothing and uses runtime analysis results to build up invariant/type knowledge.
+
+Examples of invariant detection tools include Daikon~\infercitep{ernst2001dynamically},
+DIDUCE~\infercitep{hangal2002tracking}, and Carrot~\infercitep{pytlik2003automated}, and
+typically enhance statically typed languages with more expressive types or contracts.
+Examples of dynamic type inference include our tool, Rubydust \infercitep{An10dynamicinference},
+JSTrace~\infercitep{saftoiu2010jstrace}, and TypeDevil~\infercitep{pradel2015typedevil},
+and typically target untyped languages.
+
+Both strategies have different space behavior with respect to representing
+the set of known invariants.
+The ruling-out strategy typically uses a lot of memory at the beginning,
+but then can free memory as it rules out invariants. For example, if
+\texttt{odd(x)} and \texttt{even(x)} are assumed, observing \texttt{x = 1}
+means we can delete and free the memory recording \texttt{even(x)}.
+Alternatively, the building-up strategy uses the least memory storing
+known invariants/types at the beginning, but increases memory usage
+as more the more samples are collected. For example, if we know
+\texttt{x : Bottom}, and we observe \texttt{x = "a"} and \texttt{x = 1}
+at different points in the program, we must use more memory to
+store the union \texttt{x : String $\cup$ Integer} in our set of known invariants.
+
+\paragraph{Daikon}
+Daikon can reason about very expressive relationships between variables
+using properties like ordering ($x < y$), linear relationships ($y = ax + b$),
+and containment ($x \in y$). It also supports reasoning with ``derived variables''
+like fields ($x.f$), and array accesses ($a[i]$).
+%
+Typed Clojure's dynamic inference can record heterogeneous data structures
+like vectors and hash-maps, but otherwise cannot express relationships
+between variables.
+
+There are several reasons for this. The most prominent is that Daikon
+primarily targets Java-like languages, so inferring simple type information
+would be redundant with the explicit typing disciplines of these languages.
+On the other hand, the process of moving from Clojure to Typed Clojure
+mostly involves writing simple type signatures without dependencies
+between variables. Typed Clojure recovers relevant dependent information
+via occurrence typing~\infercitep{TF10}, and gives the option to manually annotate necessary
+dependencies in function signatures when needed.
+
+\paragraph{Reverse Engineering Programs with Static Analysis}
+Rigi~\infercitep{muller1992reverse} analyzes
+the structure of large software systems,
+combining static analysis 
+with a user-facing graphical environment to allow users to view and manipulate
+the in-progress reverse engineering results.
+We instead use a static type system as a feedback mechanism,
+which forces more aggressive compacting of generated annotations.
+
+Lackwit~\infercitep{o1997lackwit} uses static analysis to identify abstract 
+data types in C programs. Like our work, they share representations between
+values, except they use type inference with representations encoded as types.
+Recursive representations are inferred via Felice and Coppos's
+work on type inference with recursive types~\infercitep{cardone1991type},
+where we rely on our imprecise ``squashing'' algorithms over incomplete runtime samples.
+
+Soft Typing~\infercitep{CF91} uses static analysis to insert runtime checks into untyped
+programs for invariants that cannot be proved statically. Our approach is instead to let
+the user check the generated annotations with a static type system, with static type errors
+guiding the user to manually add casts when needed.
+
+\paragraph{Schema Inference}
+\infercitet{baazizi2017schema}
+infer structural properties of JSON data using a custom JSON schema format.
+Their schema inference algorithm proceeds in two stages:
+schema inference and schema fusion.
+This resembles our collection and naive type environment construction phases.
+There are slight differences between schema fusion and our approach.
+Schema fusion upcasts heterogeneous array types to be homogeneous, where
+we maintain heterogeneous vector types until a differently-sized
+vector type is found in the same position.
+We also support function types, which JSON lacks.
+While they support nested data, they do not attempt to factor out common types as names
+or create recursive types like our squashing algorithms.
+
+\infercitet{discala2016automatic}
+present a machine learning algorithm to translate denormalized
+and nested data that is commonly found in NoSQL databases to traditional
+relational formats used by standard RDBMS.
+A key component is a schema generation algorithm which arranges related
+data into tables via a matching algorithm which discovers related attributes.
+Phases 1 and 2 of their algorithm are similar to our local and global
+squashing algorithms, respectively, in that first locally accessible information
+is combined, and then global information.
+%TODO do they infer recursive schemas?
+They identify groups of attributes that have (possibly cyclic) relationships.
+%They choose a loose method of relating entities (soft functional dependencies) to compensate
+%for data inconsistencies and to help users learn about their data via higher-level abstractions.
+Where our squashing algorithms for map types are based on (sets of) keysets---on the 
+assumption that related entities use similar keysets---they also join attributes
+based on their similar values.
+This enables more effective entity matching via equivalent attributes
+with different names (e.g., ``Email'' vs ``UserEmail'').
+Our approach instead assumes programs are somewhat internally consistent, and instead
+optimizes to handle missing samples from incomplete dynamic analysis.
+
+%TODO Inferring XML Schema Definitions from XML Data - Bex, Neven, Vansummeren
+
+% Inference and Evolution of TypeScript Declaration Files
+% - they submit pull requests from their tool's output
+% https://cs.au.dk/~amoeller/papers/tstools/paper.pdf
+\paragraph{Other Annotation Tools}
+Static analyzers
+for JavaScript
+(TSInfer~\infercitep{kristensen2017inference}) and for Python (Typpete~\infercitep{typette18}
+and PyType~\infercitep{pytype})
+automatically annotate code with types.
+PyType and Typpete inferred \texttt{nodes}
+as \texttt{(? -> int)}
+and \texttt{Dict[(Sequence, object)] -> int}, respectively---our tool 
+infers it as \clj{[Op -> Int]} by also generating a compact recursive
+type.
+Similarly, a class-based translation of
+inferred both \texttt{left} and \texttt{right}
+fields
+as \texttt{Any} by PyType, and as \texttt{Leaf} by Typpete---our tool
+uses \clj{Op},
+a compact recursive type containing \emph{both} \clj{Leaf} and \clj{Node}.
+This is similar to our experience with TypeWiz in \Dchapref{infer:chapter:intro}.
+(We were unable to install TSInfer.)
+
+NoRegrets~\infercitep{noregrets2018} uses dynamic analysis to learn how a program
+is used, and automatically runs the tests of downstream projects to
+improve test coverage.
+Their \emph{dynamic access paths} represented as
+a series of \emph{actions} are analogous to our paths of path elements.
+
+% distinguishes public/private API
+
+% Python
+% - MaxSMT-Based Type Inference for Python 3
+%  - cites other python based projects
+%  - https://link.springer.com/content/pdf/10.1007%2F978-3-319-96142-2_2.pdf
+% - pytype
+%  - static analysis to generate python annotations
+%  - https://github.com/google/pytype
+% - pyannotate
+%   - dynamic analysis
+%   - https://github.com/dropbox/pyannotate
+
+% A Survey of Dynamic Analysis and Test Generation for JavaScript
+%  - http://mp.binaervarianz.de/js_survey_2017.pdf

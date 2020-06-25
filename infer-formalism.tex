@@ -1,0 +1,899 @@
+\Dchapter{Formalism}
+\label{infer:sec:formalism}
+
+We present \lambdatrack{}, an untyped $\lambda$-calculus
+describing the essense of our approach to automatic annotations.
+We split our model into two phases: the collection phase 
+\collectOp{}
+that runs an instrumented program and collects observations, and
+an inference phase 
+\inferanns{}
+that derives type annotations from these observations
+that can be used to automatically annotate the program.
+
+We define the top-level driver function \annotateOp{} that connects
+both pieces.
+It says, given a program \e{}
+and top-level variables $\ova{\x{}}$ to infer annotations for,
+return an annotation environment \atenv{} with possible entries for
+$\ova{\x{}}$ based on observations from evaluating
+an instrumented \e{}.
+%
+%\begin{mathpar}
+%\infer[]
+%{ \collectnoalign{\e{}}{\ova{\x{}}}{\res{}}
+%  \\
+%  \inferannsnoalign{\res{}}{\atenv{}}
+%}
+%{ \annotatenoalign{\e{}}{\ova{\x{}}}{\atenv{}} }
+%\end{mathpar}
+\begin{mathpar}
+  \begin{array}{lllll}
+    \annotateOp{} : \e{}, {\ova{\x{}}} \rightarrow \atenv{}\\
+    \annotateOp{} = \inferanns{} \circ \collectOp{}
+  \end{array}
+\end{mathpar}
+
+To contextualize the presentation of these phases, we begin a running example:
+inferring the type of a top-level function $f$, that takes a map and
+returns its {\makekw{a}} entry, 
+based on the following usage.
+%
+\begin{Verbatim}[commandchars=\\\{\}, codes={\catcode`$=3\catcode`^=7}]
+  define $f$ = \uabs{m}{\getexp{m}{\makekw{a}}}
+  \appexp{f}{\curlymap{\makekw{a} 42}} => 42
+\end{Verbatim}
+%
+Plugging this example into our driver function
+we get a candidate annotation for $f$:
+$$
+\annotatenoalign{\appexp{f}{\curlymap{\makekw{a}\ 42}}}{[f]}{\{\hastype{f}{[\{\makekw{a}\ \IntT{}\} \rightarrow \IntT{}]}\}}
+$$
+
+\Dsection{Collection phase}
+\label{infer:sec:formal:collection-phase}
+
+\begin{figure}
+  $$
+  \begin{altgrammar}
+    \val{} &::=& \num{}
+       \alt {\kw{}}
+       \alt {\closure{\uabs{\x{}}{\e{}}}{\openv{}}}
+       \alt {\curlymap{\ova{\kw{}\ {\val{}}}}}
+       \alt {\const{}}
+       &\mbox{Values} \\
+   \e{} &::=& \x{}
+       \alt \val{}
+       \alt \trackE{\e{}}{\inferpath{}}
+       \alt {\uabs{\x{}}{\e{}}}
+       \alt {\curlymapvaloverrightnoarrow{\e{}}{\e{}}}
+       \alt {\appexp{\e{}}{\ova{\e{}}}}
+       &\mbox{Expressions} \\
+    \openv{} &::=& \{\ova{x \mapsto \val{}}\}
+       &\mbox{Runtime environments} \\
+   \inferpth{}
+      &::=& \x{}
+       \alt \dompe{}
+       \alt \rngpe{}
+       \alt {\inferkeype{\HMapreq{}}{\kw{}}}
+       &\mbox{Path Elements} \\
+   \inferpath{} &::=& \ova{\inferpth{}}
+       &\mbox{Paths} \\
+       \res{}
+      &::=& \restwoarrow{\inferpath{}}{\ty{}}
+      &\mbox{Inference results} \\
+    \ty{}, \s{}
+      &::=& \IntT{}
+       \alt \arrow{\ty{}}{\ty{}}
+       %\alt \HMappretty{\ova{\kw{}\ \ty{}}}
+       \alt \HMaptwo{\HMapreq{}}{\HMapopt{}}
+       \alt \Unionsplice{\ova{\ty{}}}
+       \\
+       &\alt& \alias{} % type alias
+       \alt \kw{}
+       \alt \Keyword{}
+       \alt \Top{}
+       \alt \IPersistentMap{\ty{}}{\ty{}}
+       \alt \UnknownT{}
+      &\mbox{Types} \\
+    \tenv{} &::=& \{\ova{\hastype{\x{}}{\ty{}}}\}
+      &\mbox{Type environments} \\
+    \HMapreq{}, \HMapopt{}
+      &::=& \{ \ova{\kw{}\ {\ty{}}} \}
+      &\mbox{HMap entries} \\
+    \aenv{} &::=& \{\ova{\alias{} \mapsto \ty{}}\}
+      &\mbox{Type alias environments} \\
+    \atenv{} &::=& (\aenv{}, \tenv{})
+      &\mbox{Annotation environments} \\
+  \end{altgrammar}
+  $$
+\caption{Syntax of Terms, Types, Inference results, and Environments for \lambdatrack{}}
+\label{infer:fig:syntax}
+\end{figure}
+
+%\begin{figure*}
+%  \ifdefined\PAPER
+%  \footnotesize
+%  \fi
+%\begin{mathpar}
+%  \begin{array}{llll}
+%    \infer [B-Track]
+%    { \opsemtrack{\openv{}}{\e{}}{\val{}}{\res{}} \\\\
+%    \trackmeta{\val{}}{\inferpath{}}{\vp{}}{\resp{}}}
+%    { \opsemtrack{\openv{}}{\trackE{\e{}}{\inferpath{}}}{\vp{}}{\unionres{\res{}}{\resp{}}}
+%    }
+%  \end{array}
+%
+%\infer [B-App]
+%{ \opsemtrack{\openv{}}{\e{1}}{\closure{\uabs{\x{}}{\e{}}}{\openvp{}}}{\res{1}} \\\\
+%  \opsemtrack{\openv{}}{\e{2}}{\val{}}{\res{2}} \\\\
+%  \opsemtrack{\extendopenv{\openvp{}}{\x{}}{\val{}}}{\e{}}{\vp{}}{\res{3}} \\
+%}
+%{ \opsemtrack{\openv{}}{\appexp{\e{1}}{\e{2}}}{\vp{}}{\bigunionres{\ova{\res{i}}}}
+%}
+%
+%  \begin{array}{lll}
+%    \infer [B-Clos]
+%    {}
+%    { \opsemtrack{\openv{}}{\uabs{\x{}}{\e{}}}{\closure{\uabs{\x{}}{\e{}}}{\openv{}}}{\emptyres{}}}
+%    \\\\
+%    \infer [B-Val]
+%    {}
+%    { \opsemtrack{\openv{}}{\val{}}{\val{}}{\emptyres{}} }
+%    \ \ \ \ \ \ 
+%
+%    \infer [B-Var]
+%    {}
+%    { \opsemtrack{\openv{}}{\xvar{}}{\inopenvnoeq{\openv{}}{\xvar{}}}{\emptyres{}}
+%    }
+%  \end{array}
+%
+%\infer [B-Delta]
+%{ \opsemtrack{\openv{}}{\e{}}{\const{}}{\res{1}}
+%  \\
+%  \overrightarrow{\opsemtrack {\openv{}}{\ep{}}{\val{}}{\resp{}}}
+%  \\\\
+%  \inferconstantopsem{\const{}}{\ova{\val{}}}{\vp{}}{\res{2}}
+%}
+%{ \opsemtrack {\openv{}}
+%              {\appexp {\e{}} {\overrightarrow{\ep{}}}}
+%              {\vp{}}
+%              {\overrightarrow{\unionres{\res{}}{\resp{}}}}
+%       }
+%
+%\end{mathpar}
+%\caption{Operational Semantics for \lambdatrack{}}
+%\label{infer:fig:semantics}
+%\end{figure*}
+
+Now that we have a high-level picture of how these phases interact,
+we describe the syntax and semantics of \lambdatrack{}, before
+presenting the details of \collectOp{}.
+%
+\figref{infer:fig:syntax} presents the syntax of \lambdatrack{}.
+Values \val{} consist of numbers \num{}, Clojure-style keywords {\kw{}},
+closures {\closure{\uabs{\x{}}{\e{}}}{\openv{}}}, constants \const{},
+and keyword keyed hash maps {\curlymapvaloverrightnoarrow{\kw{}}{\val{}}}.
+
+Expressions \e{} consist of variables \x{}, values,
+functions, maps, and function applications.
+The special form
+\trackE{\e{}}{\inferpath{}}
+observes {\e{}} as related to path {\inferpath{}}.
+Paths \inferpath{} 
+record the source of a runtime value with respect
+to a sequence of path elements \inferpth{}, always starting with
+a variable \x{}, and are read left-to-right.
+Other path elements are
+a function domain \dompe{}, 
+a function range \rngpe{},
+and a map entry {\inferkeype{\ova{\kw{1}}}{\kw{2}}}
+which represents the result of looking up {\kw{2}}
+in a map with keyset ${\ova{\kw{1}}}$.
+
+Inference results \restwoarrow{\inferpath{}}{\ty{}}
+are pairs of paths {\inferpath{}} and types \ty{}
+that say the path \inferpath{} was observed to be 
+type \ty{}.
+Types \ty{} are numbers \IntT{}, function types \arrow{\ty{}}{\ty{}},
+ad-hoc union types \Union{\ty{}}{\ty{}},
+type aliases \alias{},
+%top type \Top{},
+and unknown type \UnknownT{} that represents
+a temporary lack of knowledge during the inference process.
+Heterogeneous keyword map types \HMappretty{\ova{\kw{}\ \ty{}}}
+for now represent a series of required keyword entries---we will extend
+them to have optional entries in later phases.
+
+The big-step operational semantics
+{\opsemtrack{\openv{}}{\e{}}{\val{}}{\res{}}}
+(\figref{infer:fig:trackmeta})
+says under runtime environment \openv{}
+expression \e{} evaluates to value \val{}
+with inference results \res{}.
+Most rules are standard, with extensions to correctly
+propagate inference results \res{}.
+B-Track is the only interesting rule, which instruments
+its fully-evaluated argument with the \trackmetaOp{}
+metafunction.
+
+The metafunction \trackmeta{\val{}}{\inferpath{}}{\vp{}}{\res{}} (\figref{infer:fig:trackmeta})
+says if value \val{} occurs at path {\inferpath{}}, then return a possibly-instrumented
+\vp{} paired with inference results {\res{}} that can be immediately derived
+from the knowledge that \val{} occurs at path {\inferpath{}}.
+It has a case for every kind of value.
+The first three cases records the number input as type {\IntT{}}.
+The fourth case, for closures, returns a wrapped value
+resembling higher-order function contracts~\infercitep{findler2002contracts},
+but we track the domain and range rather than verify them.
+The remaining rules case, for maps, recursively tracks each map value,
+and returns a map with possibly wrapped values.
+Immediately accessible inference results are combined
+and returned.
+A specific rule for the empty map is needed because we otherwise only rely on
+recursive calls to \trackEOp{} to gather inference results---in the empty case,
+we have no data to recur on.
+
+\begin{figure}
+\begin{mathpar}
+    \infer [B-Track]
+    { \opsemtrack{\openv{}}{\e{}}{\val{}}{\res{}} \\\\
+    \trackmeta{\val{}}{\inferpath{}}{\vp{}}{\resp{}}}
+    { \opsemtrack{\openv{}}{\trackE{\e{}}{\inferpath{}}}{\vp{}}{\unionres{\res{}}{\resp{}}}
+    }
+
+\infer [B-App]
+{ \opsemtrack{\openv{}}{\e{1}}{\closure{\uabs{\x{}}{\e{}}}{\openvp{}}}{\res{1}} \\\\
+  \opsemtrack{\openv{}}{\e{2}}{\val{}}{\res{2}} \\\\
+  \opsemtrack{\extendopenv{\openvp{}}{\x{}}{\val{}}}{\e{}}{\vp{}}{\res{3}} \\
+}
+{ \opsemtrack{\openv{}}{\appexp{\e{1}}{\e{2}}}{\vp{}}{\bigunionres{\ova{\res{i}}}}
+}
+
+    \infer [B-Clos]
+    {}
+    { \opsemtrack{\openv{}}{\uabs{\x{}}{\e{}}}{\closure{\uabs{\x{}}{\e{}}}{\openv{}}}{\emptyres{}}}
+
+    \infer [B-Val]
+    {}
+    { \opsemtrack{\openv{}}{\val{}}{\val{}}{\emptyres{}} }
+
+
+    \infer [B-Var]
+    {}
+    { \opsemtrack{\openv{}}{\xvar{}}{\inopenvnoeq{\openv{}}{\xvar{}}}{\emptyres{}}
+    }
+
+\infer [B-Delta]
+{ \opsemtrack{\openv{}}{\e{}}{\const{}}{\res{1}}
+  \\
+  \overrightarrow{\opsemtrack {\openv{}}{\ep{}}{\val{}}{\resp{}}}
+  \\\\
+  \inferconstantopsem{\const{}}{\ova{\val{}}}{\vp{}}{\res{2}}
+}
+{ \opsemtrack {\openv{}}
+              {\appexp {\e{}} {\overrightarrow{\ep{}}}}
+              {\vp{}}
+              {\overrightarrow{\unionres{\res{}}{\resp{}}}}
+       }
+
+  \arraycolsep=1.4pt
+  \begin{array}{lllll}
+    %\trackmeta{\val{}}{\inferpath{}}{\val{}}{\res{}}\\\\
+
+    \trackmetaalign{\num{}}{\inferpath{}}{\num{}}{\singletonres{\inferpath{}}{\IntT{}}}
+    \\
+    \trackmetaalign{\kw{}}{\inferpath{}}{\kw{}}
+                   {\singletonres{\inferpath{}}
+                                 {\Keyword{}}}
+    \\
+    \trackmetaalign{\const{}}{\inferpath{}}{\const{}}{\emptyres{}}
+    \\
+    \trackmetalhs{\closure{\uabs{\x{}}{\e{}}}{\openv{}}}
+                 {\inferpath{}}
+                 &=&
+                 \trackmetarhs
+                   {\closure{\ep{}}{\openv{}}}
+                   {\emptyres{}}
+                   % let's treat functions as opaque wrt arity as they are in clojure
+                   %{\singletonres{\inferpath{}}
+                   %              {\arrow{\UnknownT{}}{\UnknownT{}}}}
+         \\
+    &&
+    \begin{array}{@{}llll}
+      \text{where } \y{} \text{ is fresh},\\
+       \text{ }    \begin{array}{@{}llll}
+                      \ep{} =
+                        \uabs{\y{}}{\trackE{&\appexp{(\uabs{\x{}}{\e{}})}{\trackE{\yvar{}}{\appendone{\inferpath{}}{\dompe{}}}}}
+                                           {\\&\appendone{\inferpath{}}{\rngpe{}}}}
+                   \end{array}
+    \end{array}
+    \\
+    \trackmetaalign{\{\}}
+                   {\inferpath{}}
+                   {\{\}}
+                   {\singletonres{\inferpath{}}
+                                 {\HMappretty{}}}
+    \\
+    \trackmetaalign{\{\ova{\kw{1}\ {\kw{2}}}\ 
+                      \ova{\kw{}\ {\val{}}}
+                    \}}
+                   {\inferpath{}}
+                   {\{\ova{\kw{1}\ {\kw{2}}}\ 
+                      \ova{\kw{}\ {\vp{}}}
+                    \}}
+                   {\bigunionres{\res{}}}
+    \\
+    &&
+    \text{where } \ova{\trackmeta{\val{}}
+                                            {\appendone{\inferpath{}}
+                                                       {\inferkeype{\{\ova{\kw{1}\ {\kw{2}}}\ 
+                                                                      \ova{\kw{}\ {\UnknownT{}}}
+                                                                    \}}
+                                                                   {\kw{}}}}
+                                            {\vp{}}
+                                            {\res{}}}
+    \\
+  \end{array}
+  
+  \arraycolsep=1.4pt
+  \begin{array}{lllr}
+    \inferconstantopsemalign{\assocliteral{}}{\curlymap{\ova{\kw{}\ \val{}}}, \kwp{}, \vp{}}{\updatemap{\curlymap{\ova{\kw{}\ \val{}}}}{\kwp{}}{\vp{}}}
+                            {\emptyres{}}\\
+    \inferconstantopsemalign{\getliteral{}}{\curlymap{\kw{}\ \val{}, \ova{\kwp{}\ \vp{}}}, \kw{}}{\val{}}
+                            {\emptyres{}}\\
+    \inferconstantopsemalign{\dissocliteral{}}{\curlymap{\kw{}\ \val{}, \ova{\kwp{}\ \vp{}}}, \kw{}}{\curlymap{\ova{\kwp{}\ \vp{}}}}
+                            {\emptyres{}}\\
+  \end{array}
+\end{mathpar}
+\caption{Operational semantics, \trackmeta{\val{}}{\inferpath{}}{\val{}}{\res{}} and constants}
+\label{infer:fig:trackmeta}
+\end{figure}
+
+Now we have sufficient pieces to describe the initial collection phase of our model.
+Given an expression \e{} and variables ${\ova{\x{}}}$ to track,
+\instrumentnoalign{\e{}}{\ova{\x{}}}{\ep{}}
+returns an instrumented expression \ep{}
+that tracked usages of $\ova{\x{}}$.
+It is defined via capture-avoiding substitution:
+$$
+\instrumentnoalign{\e{}}{\ova{\x{}}}{\replacefor{\e{}}{\ova{\trackE{\x{}}{[\x{}]}}}{\ova{\x{}}}}
+$$
+
+Then, the overall collection phase 
+\collectnoalign{\e{}}{\ova{\x{}}}{\res{}}
+says, given an expression \e{}
+and variables
+$\ova{\x{}}$
+to track,
+returns inference results {\res{}}
+that are the results of evaluating \e{}
+with instrumented occurrences of $\ova{\x{}}$.
+It is defined as:
+%
+$$
+\collectnoalign{\e{}}{\ova{\x{}}}{\res{}}, \text{ where }
+  \opsemtrack{}{\instrument{\e{}}{\ova{\x{}}}}{\val{}}{\res{}}
+$$
+
+For our running example
+of collecting for the program \appexp{f}{\curlymap{\makekw{a}\ 42}},
+we instrument the program by wrapping occurrences of $f$ with \trackEOp{}
+with path $[f]$.
+$$
+\instrumentnoalign{\appexp{f}{\curlymap{\makekw{a}\ 42}}}{[f]}{\appexp{\trackE{f}{[f]}}{\curlymap{\makekw{a}\ 42}}}
+$$
+
+Then we evaluate the instrumented program and derive two inference results
+(colored in red for readability):
+$$
+\opsemtrack{}{\appexp{\trackE{f}{[f]}}{\curlymap{\makekw{a}\ 42}}}{42}{\resflatcolor{\resentry{[f, \dompe{}, \inferkeypenokeyset{[\makekw{a}]}{\makekw{a}}]}{\IntT{}}, \resentry{[f, \rngpe{}]}{\IntT{}}}}
+$$
+
+Here is the full derivation:
+\begin{Verbatim}[commandchars=\\\{\}, codes={\catcode`$=3\catcode`^=7}]
+=> \appexp{\trackE{f}{[f]}}{\curlymap{\makekw{a}\ 42}}
+=> \trackE{\getexp{\trackE{\curlymap{\makekw{a}\ 42}}{[f, \dompe{}]}}{\makekw{a}}}{[f, \rngpe{}]}
+=> \trackE{\getexp{{\curlymap{\makekw{a}\ 42}} ; \resflatcolor{\resentry{[f, \dompe{}, \inferkeypenokeyset{[\makekw{a}]}{\makekw{a}}]}{\IntT{}}}}{\makekw{a}}}{[f, \rngpe{}]}
+=> \trackE{42 ; \resflatcolor{\resentry{[f, \dompe{}, \inferkeypenokeyset{[\makekw{a}]}{\makekw{a}}]}{\IntT{}}}}{[f, \rngpe{}]}
+=> $42 ; \resflatcolor{\resentry{[f, \dompe{}, \inferkeypenokeyset{[\makekw{a}]}{\makekw{a}}]}{\IntT{}}, \resentry{[f, \rngpe{}]}{\IntT{}}}$
+\end{Verbatim}
+
+Notice that intermediate values can have inference results (colored) attached to them with a semicolon,
+and the final value has inference results about both $f$'s domain and range.
+
+\Dsection{Inference phase}
+\label{infer:sec:formal:inference-phase}
+
+After the collection phase, we have a collection of inference results \res{}
+which can be passed to the 
+metafunction \inferanns{}(\res{}) = \atenv{} to produce an annotation environment:
+\begin{mathpar}
+  \begin{array}{lllll}
+    \inferanns{} : \res{} \rightarrow \atenv{}\\
+    \inferanns{} = \inferrecOp{} \circ \generatetenv{}\\\\
+  \end{array}
+\end{mathpar}
+%
+The first pass $\generatetenv{} (\res{}) = \tenv{}$ generates an initial type environment
+from inference results \res{}.
+%It is defined (in \figref{infer:fig:generatetenv})
+%as a fold over \res{}, building a \tenv{} incrementally via the \inferupdateOp{}
+%metafunction.
+%
+The second pass
+$$\squashlocal{}(\tenv{}) = \atenvp{}$$
+creates individual type aliases
+for each HMap type in \tenv{} and then merges aliases that both occur inside the same
+nested type into possibly recursive types. % (\figref{infer:fig:squashlocal}).
+%
+The third pass $\squashglobal{} (\atenv{}) = \atenvp{}$
+merges type aliases in \atenv{} based on their similarity. % (\figref{infer:fig:squashglobal}).
+
+\Dsubsection{Pass 1: Generating initial type environment}
+\label{infer:sec:formal:inference-phase:genenv}
+
+\begin{figure*}
+\begin{mathpar}
+  \begin{array}{rllll}
+    \joinOp{} : \ty{}, \ty{} \rightarrow \ty{}
+    \\
+    \joinalign{\Unionsplice{\ova{\s{}}}}{\ty{}}{\Unionsplice{\ova{\joinexpression{\s{}}{\ty{}}}}}
+    \\
+    \joinalign{\ty{}}{\Unionsplice{\ova{\s{}}}}{\Unionsplice{\ova{\joinexpression{\s{}}{\ty{}}}}}
+    \\
+    \joinalign{\UnknownT{}}{\ty{}}{\ty{}}
+    \\
+    \joinalign{\ty{}}{\UnknownT{}}{\ty{}}
+    \\
+    \joinalign{\arrow{\ty{1}}{\s{1}}}{\arrow{\ty{2}}{\s{2}}}
+              {\arrow{\joinexpression{\ty{1}}{\ty{2}}}
+                     {\joinexpression{\s{1}}{\s{2}}}}
+    \\
+    \joinalign{\HMaptwo{\HMapreq{1}}{\HMapopt{1}}}
+              {\HMaptwo{\HMapreq{2}}{\HMapopt{2}}}
+              {\joinHMapexpression{\HMaptwo{\HMapreq{1}}{\HMapopt{1}}}
+                                  {\HMaptwo{\HMapreq{2}}{\HMapopt{2}}}}
+                                  \text{,}
+                                  \\
+    &&\ova{(\kw{}, \kw{i}) \in {\HMapreq{i}}} \Rightarrow \ova{\kw{i-1} = \kw{i}}
+    \\
+    \joinalign{\ty{}}{\s{}}{\Union{\ty{}}{\s{}}} \text{, otherwise}
+  \end{array}
+%
+  \begin{array}{lllll}
+    \joinHMapnoalign{\HMaptwo{\HMapreq{1}}{\HMapopt{1}}}{\HMaptwo{\HMapreq{2}}{\HMapopt{2}}}{\HMaptwo{\HMapreq{}}{\HMapopt{}}}
+    \\
+    \begin{array}{lllll}
+      \text{where}
+          &\mathsf{req}  = \bigcup \ova{\textsf{dom}({\HMapreq{i}})} \\
+          &\mathsf{opt}  = \bigcup \ova{\textsf{dom}({\HMapopt{i}})} \\
+          &\ova{\kw{}^r} = \bigcap \ova{\textsf{dom}({\HMapreq{i}})} \setminus \mathsf{opt}\\
+          &\ova{\kw{}^o} = \mathsf{opt} \cup (\mathsf{req} \setminus \ova{\kw{}^r})\\
+          &\HMapreq{}    = \{\ova{\kw{}^r\ \joinstarexpression{\ova{\HMapreq{i}[\kw{}^r]}}} \} \\
+          &\HMapopt{}    = \{\ova{\kw{}^o\ \joinstarexpression{\ova{\HMapreq{i}[\kw{}^o], \HMapopt{i}[\kw{}^o]}}} \}
+    \end{array}
+  \end{array}
+
+  \begin{array}{lllll}
+    \textsf{fold} : \forall \alpha, \beta. (\alpha, \beta \rightarrow \alpha), \alpha, \ova{\beta} \rightarrow \alpha\\
+    \textsf{fold}(\textsf{f}, \textsf{a}_0, \ova{\textsf{b}}^n) = \textsf{a}_n\\
+    \begin{array}{llll}
+      \text{where } \ova{\textsf{a}_i = \textsf{f}(\textsf{a}_{i-1}, \textsf{b}_{i})}^{1 \leq i \leq n}\\
+    \end{array}
+    \\\\
+    \generatetenv{} : \res{} \rightarrow \tenv{}\\
+    \generatetenv{} (\res{}) = \textsf{fold}(\inferupdateOp{}, \{\}, \res{})\\
+  \end{array}
+  \begin{array}{lllll}
+    \inferupdateOp : \tenv{}, \resentry{\inferpath{}}{\ty{}} \rightarrow  \tenv{} 
+    \\
+    \inferupdatealign{\tenv{}}{\appendone{\inferpath{}}{\inferkeype{\{\ova{\kwp{}\ \s{}} \}}{\kw{}}}}{\ty{}}
+            {\inferupdate{\tenv{}}{\inferpath{}}{\{\ova{\kwp{}\ \s{}}\ \kw{}\ \ty{} \}}}
+    \\
+    \inferupdatealign{\tenv{}}{\appendone{\inferpath{}}{\dompe{}}}{\ty{}}
+                     {\inferupdate{\tenv{}}{\inferpath{}}{\arrow{\ty{}}{\UnknownT{}}}}
+    \\
+    \inferupdatealign{\tenv{}}{\appendone{\inferpath{}}{\rngpe{}}}{\ty{}}
+                {\inferupdate{\tenv{}}{\inferpath{}}{\arrow{\UnknownT{}}{\ty{}}}}
+    \\
+    \inferupdatealign{\updatemap{\tenv{}}{\x{}}{\s{}}}{[x]}{\ty{}}
+                     {\updatemap{\tenv{}}
+                                {\x{}}
+                                {\joinexpression{\ty{}}{\s{}}}
+                                 }
+    \\
+    \inferupdatealign{\tenv{}}{[\xvar{}]}{\ty{}}{\updatemap{\tenv{}}{\x{}}{\ty{}}}
+    \\
+  \end{array}
+
+\end{mathpar}
+\caption{Definition of $\generatetenv{}(\res{}) = \tenv{}$}
+\label{infer:fig:generatetenv}
+\end{figure*}
+
+The first pass is given in \figref{infer:fig:generatetenv}.
+The entry point \generatetenv{} folds over inference results
+to create an initial type environment via \inferupdateOp{}.
+This style is inspired by occurrence typing~\infercitep{TF10},
+from which we also borrow the concepts of paths into types.
+
+We process paths right-to-left in \inferupdateOp{}, building
+up types from leaves to root, before joining the fully constructed type with the existing
+type environment via \joinOp{}.
+The first case handles the \keypeOp{} path element.
+The extra map of type information preserves both keyset
+information and any entries that might represent tags
+(populated by the final case of \trackEOp{}, \figref{infer:fig:trackmeta}).
+This information helps us avoid prematurely collapsing tagged maps,
+by the side condition of the HMap \joinOp{} case.
+The \joinHMapOp{} metafunction aggressively combines two HMaps---required
+keys in both maps are joined and stay required, otherwise keys
+become optional.
+
+The second and third \inferupdateOp{} cases update the domain and range of a function type,
+respectively.
+The \joinOp{} case for function types joins covariantly on the domain to yield more useful
+annotations. For example, if a function accepts \IntT{} and \Keyword{},
+it will have type
+\joinnoalign{\arrow{\IntT{}}{\UnknownT{}}}{\arrow{\Keyword{}}{\UnknownT{}}}
+{\arrow{\Union{\IntT{}}{\Keyword{}}}{\UnknownT{}}}.
+
+Returning to our running example, we now want to convert our inference results
+$$
+\res{} = \{\resentry{[f, \dompe{}, \inferkeypenokeyset{[\makekw{a}]}{\makekw{a}}]}{\IntT{}}, \resentry{[f, \rngpe{}]}{\IntT{}}\}.
+$$
+into a type environment. Via $\generatetenv{}(\res{})$, we start to trace
+\inferupdate{\{\}}{[f, \dompe{}, \inferkeypenokeyset{[\makekw{a}]}{\makekw{a}}]}{\IntT{}}
+
+%\begin{figure*}
+%\begin{mathpar}
+%  \begin{array}{lllll}
+%    \inferanns{} : \res{} \rightarrow \atenv{}\\
+%    \inferanns{} = \squashglobal{} \circ \squashlocal{} \circ \generatetenv{}\\
+%  \end{array}
+%\end{mathpar}
+%\caption{Algorithm summary: Generate an initial type environment from inference results.
+%Then generate an updated type environment paired with a type alias environment by 1: creating
+%a recursive type if a HMap contains another HMap whose keysets have a non-empty intersection, 2:
+%globally merging type aliases based on identical HMap keysets, 3: cleaning up redundant aliases.}
+%\label{infer:fig:inferanns}
+%\end{figure*}
+
+\Dsubsection{Pass 2: Squash locally}
+\label{infer:sec:formal:inference-phase:squash-local}
+
+\begin{figure*}
+\begin{mathpar}
+  \begin{array}{lllll}
+    \aliashmap{} : \atenv{}, \ty{} \rightarrow (\atenv{}, \ty{})\\
+    \aliashmap{}(\atenv{}, \ty{}) = \textsf{postwalk}(\atenv{}, \ty{}, \textsf{f})\\
+    \begin{array}{lllll}
+      \text{where} %&\textsf{f} : \atenv{}, \ty{} \rightarrow (\atenv{}, \ty{})\\
+                   &\textsf{f}(\atenv{}, {\HMaptwo{\HMapreq{1}}{\HMapreq{2}}}) = \register{}(\atenv{},\HMaptwo{\HMapreq{1}}{\HMapreq{2}})\\
+                   &\textsf{f}(\atenv{}, \Unionsplice{\ova{\ty{}}}) = \register{}(\atenv{},\Unionsplice{\ova{\fullyresolve{}(\ty{})}}) \text{,}\\
+                   %&\text{ if } \exists\ty{}(\ova{\s{}}^m) \in\ova{\ty{}} .\ m > 0\\
+                   &\text{ if } \alias{} \in\ova{\ty{}}\\
+                   &\textsf{f}(\atenv{}, \ty{}) = (\atenv{}, \ty{}), \text{otherwise}
+    \end{array}
+  \end{array}
+  \begin{array}{lllll}
+    \register{} : \atenv{}, \ty{} \rightarrow (\atenv{}, \ty{})\\
+    \register{}(\atenv{}, \ty{}) = (\updatemap{\atenv{}}{\alias{}}{\ty{}}, \alias{}), \text{ where } \alias{} \text{ is fresh}
+    \\\\
+    \fullyresolve{} : \atenv{}, \ty{} \rightarrow \ty{}\\
+    \fullyresolve{}(\atenv{}, \alias{}) = \fullyresolve{}(\atenv{}[\alias{}])\\
+    \fullyresolve{}(\atenv{}, \ty{}) = \ty{}  \text{, otherwise}
+  \end{array}
+
+  \begin{array}{lllll}
+    \aliasesin{} : \ty{} \rightarrow \ova{\alias{}}\\
+    \aliasesin{}(\alias{}) = [\alias{}]\\
+    \aliasesin{}(\ty{}(\ova{\s{}})) = \bigcup{\ova{\aliasesin{}(\s{})}}
+    \\\\
+    \textsf{postwalk} : \atenv{}, \ty{}, (\atenv{}, \ty{} \rightarrow (\atenv{}, \ty{})) \rightarrow (\atenv{}, \ty{})\\
+    \textsf{postwalk}(\atenv{0}, \ty{}(\ova{\s{}}^n), \textsf{w}) = \textsf{w}(\atenv{n}, \ty{}(\ova{\sp{}}))\\
+    \begin{array}{lllll}
+      \text{where}
+        &\ova{(\atenv{i}, \sp{i}) = \textsf{postwalk}(\atenv{i-1}, \s{i}, \textsf{w})}\\
+    \end{array}
+    \\\\
+    \mergealiases{} : \atenv{}, \ova{\alias{}} \rightarrow \atenv{}\\
+    \mergealiases{}(\atenv{}, []) = \atenv{}\\
+    \mergealiases{}(\atenv{}, [\alias{1} ... \alias{n}]) =
+        \updatemap{\updatemapmulti{\atenv{}}{\alias{i}}{\alias{1}}}{\alias{1}}{\s{}}\\\
+    \begin{array}{llll}
+      \text{where } &\s{} = \joinstarexpression{\ova{\replacefor{\textsf{f}(\fullyresolve{}(\atenv{},\alias{i}))}{\alias{1}}{\alias{i}}}}
+                    \\
+                    &\textsf{f}(\aliasp{}) = \EmptyUnion{}, \text{ if } \aliasp{} \in \ova{\alias{}}\\
+                    &\textsf{f}(\Unionsplice{\ova{\ty{}}}) = \Unionsplice{\ova{\textsf{f}(\ty{})}}\\
+                    &\textsf{f}(\ty{}) = \ty{} \text{, otherwise}
+    \end{array}
+    \\\\
+    %\trymergealias{} : \atenv{}, \alias{}, \alias{} \rightarrow \atenv{}
+    %\\
+    %\trymergealias{}(\atenv{}, \alias{1}, \alias{2}) =\\
+    %\begin{array}{llll}
+    %  \textsf{if } \neg \shouldmergeOp{}(\ova{\fullyresolve{}(\atenv{}, \alias{})}) \textsf{ then } \atenv{}\\
+    %  \textsf{else } \updatemap{\updatemap{\atenv{}}{\alias{2}}{\alias{1}}}
+    %                           {\alias{1}}
+    %                           % this fixes the "too much garbage" issue
+    %                           {\joinstarexpression{\ova{\replacefor{\atenv{}[\alias{i}]}{\alias{1}}{\alias{2}}}}}\\
+    %\end{array}\\
+      %fold-based version
+    \squashlocal{} : \tenv{} \rightarrow \atenv{}\\
+    \squashlocal{}(\tenv{}) = \textbf{fold}(\steptwohelper{}, \emptyatenv{}, \tenv{})\\
+    \begin{array}{lllll}
+      \text{where} &\steptwohelper{} (\atenv{}, \hastype{\x{}}{\ty{}}) = \updatemap{\atenv{2}}{\x{}}{\ty{2}}\\
+                   &\begin{array}{lllll}
+                      \text{where}
+                        &(\atenv{1}, \ty{1}) = \aliashmap{}(\atenv{}, \ty{})\\
+                        &(\atenv{2}, \ty{2}) = \squashall{}(\atenv{1}, \ty{1})\\
+                    \end{array}
+    \end{array}
+      %nonfold-based version
+    %\squashlocal{} : \atenv{} \rightarrow \atenv{}\\
+    %\squashlocal{}(\atenv{0}) = \atenv{n}\\
+    %\begin{array}{lllll}
+    %  \text{where}\\
+    %  \begin{array}{lllll}
+    %    \steptwohelper{} (\atenv{}, \x{}, \ty{}) = \replacefor{\atenv{2}}{\ty{2}}{\x{}}\\
+    %    \begin{array}{lllll}
+    %      \text{where}
+    %      &(\atenv{1}, \ty{1}) = \aliashmap{}(\atenv{}, \ty{})\\
+    %      &(\atenv{2}, \ty{2}) = \squashall{}(\atenv{1}, \ty{1})\\
+    %    \end{array}
+    %    \\
+    %    \ova{\hastype{\x{}}{\ty{}}}^n = \atenv{0}[\tenv{}]\\
+    %    \ova{\atenv{i} = \steptwohelper{}(\atenv{i-1},{\x{i}},{\ty{i}})} \\
+    %  \end{array}
+    %\end{array}
+  \end{array}
+  \begin{array}{llll}
+    \squashall{} : \atenv{}, \ty{} \rightarrow \atenv{}\\
+    \squashall{}(\atenv{0}, \ty{}) = \atenv{n} \\
+    \begin{array}{llll}
+      \text{where }
+      &\ova{\alias{}}^n = \aliasesin{}(\ty{})\\
+      &\ova{\atenv{i} = \squash{}(\atenv{i-1}, [\alias{i}], [])}\\
+    \end{array}
+    \\\\
+    \squash : \atenv{}, \ova{\alias{}}, \ova{\alias{}} \rightarrow \atenv{}\\
+    \squash(\atenv{}, [], \textsf{d}) = \atenv{}\\
+    \squash(\atenv{}, \alias{1} :: \textsf{w}, \textsf{d}) = \\
+    \begin{array}{lllll}
+      \squash(\atenvp{}, \textsf{w} \cup \textsf{as}, \textsf{d} \cup \{\alias{1}\})\\
+      \begin{array}{@{}llll}
+        \text{where}\\
+        \begin{array}{@{}llll}
+          &\textsf{as} = \aliasesin{}(\atenv{}[\alias{1}]) \setminus \textsf{d}\\
+          &\textsf{ap} = \textsf{d} \setminus \{\alias{1}\}\\
+          &\begin{array}{@{}llll}
+             \textsf{f}(\atenv{}, \alias{2}) = 
+               &\textsf{if } \neg \shouldmergeOp{}(\ova{\fullyresolve{}(\atenv{}, \alias{})}),\\
+               &\textsf{then } \atenv{}\\
+               &\textsf{else } \mergealiases{}(\atenv{}, \ova{\alias{i}})\\
+          \end{array}\\
+          &\begin{array}{@{}llll}
+            \atenvp{} = &\textsf{if } \alias{} \in \textsf{d} \textsf{, then } \atenv{} \text{,}\\
+            &\textsf{else } \textsf{fold}(\textsf{f}, \atenv{}, \textsf{ap} \cup \textsf{as})
+          \end{array}
+        \end{array}
+      \end{array}
+    \end{array}
+    \\\\
+    \shouldmergeOp{} : \ova{\ty{}} \rightarrow \textbf{Bool}\\
+    \shouldmergeOp{}(\ova{\HMaptwo{\HMapreq{i}}{\HMapopt{i}}}) = \exists\kw{}. \ova{(\kw{}, \kw{i}) \in \HMapreq{i}}\\
+    \shouldmergeOp{}(\ova{\ty{}}) = \textbf{F}, \text{ otherwise}
+  \end{array}
+
+\end{mathpar}
+\caption{Definition of $\squashlocal{}(\tenv{}) = \atenv{}$
+%\aliasesin{}(\ty{}) returns the set of aliases that syntactically occur in \ty{}.
+%  Step 2 summary: Create aliases for HMaps (graph nodes), then squash recursive types locally
+%(don't try to merge data examples from different paths). Omitted: follow-aliases call, that erases
+%redundant aliases.
+  }
+  \label{infer:fig:squashlocal}
+\end{figure*}
+
+\begin{figure*}
+\begin{mathpar}
+  \begin{array}{lllll}
+    \textsf{req}: \atenv{}, \alias{} \rightarrow \HMapreq{}\\
+    \textsf{req}(\atenv{}, \alias{}) = \textsf{req}(\atenv{}, \atenv{}[\alias{}])\\
+    \textsf{req}(\atenv{}, \HMaptwo{\HMapreq{}}{\HMapopt{}}) = \HMapreq{}\\
+    \\\\
+    %\textsf{req}: \atenv{}, \alias{} \rightarrow \ova{\HMapreq{}}\\
+    %\textsf{req}(\atenv{}, \alias{}) = \textsf{req}(\atenv{}, \alias{})\\
+    %\textsf{req}(\atenv{}, \HMaptwo{\HMapreq{}}{\HMapopt{}}) = [\HMapreq{}]\\
+    %\textsf{req}(\atenv{}, \Unionsplice{\ova{\ty{}}}) = \bigcup\ova{\textsf{req}(\atenv{},\ty{})}\\
+    %\textsf{req}(\atenv{}, \ty{}) = [] \text{, otherwise}
+    \squashhorizonally{} : \atenv{} \rightarrow \atenv{}\\
+    \squashhorizonally{}(\atenv{}) = \\
+    \ \ \ \ 
+      \textsf{fold}(\mergealiases{}, \atenv{}, \textsf{groupSimilarReq}(\atenv{}))\\\\
+    \squashglobal{} : \atenv{} \rightarrow \atenv{}\\
+    \squashglobal{} = \\
+    \ \ \ \ \squashhorizonally{} \circ \aliassinglehmap{}
+  \end{array}
+  \begin{array}{lllll}
+    \aliassinglehmap{} : \atenv{} \rightarrow \atenv{}\\
+    \aliassinglehmap{}(\atenv{}) = \textsf{fold}(\textsf{f}, \atenvp{}, \atenvp{}[\aenv{}])\\
+    \begin{array}{llll}
+      \text{where} \\
+      \begin{array}{llll}
+                    &\atenvp{} = \textsf{fold}(\singlehmap{}, \atenv{}, \atenv{}[\tenv{}])\\
+                    &\textsf{f}(\atenv{0}, \ty{}(\ova{\s{}}^n)) = (\atenv{n}, \ty{}(\sp{})) \text{, if } \ty{} = \HMaptwo{\HMapreq{}}{\HMapopt{}}\\
+                    &\begin{array}{lllll}
+                      \text{where } \ova{(\atenv{i}, \s{i}) = \singlehmap{}(\atenv{i-1}, \s{i})}
+                     \end{array}
+                    \\
+                    &\textsf{f}(\atenv{}, \ty{}) = \singlehmap{}(\atenv{}, \ty{}) \text{, otherwise}
+      \end{array}
+    \end{array}
+    \\\\
+    \singlehmap{} : \forall \alpha. \atenv{}, (\alpha, \ty{}) \rightarrow \atenv{}\\
+    \singlehmap{}(\atenv{}, (\textsf{x}, \ty{})) = \updatemap{\atenv{}}{\textsf{x}}{\s{}}\\
+    \begin{array}{lllll}
+      \text{where} &(\atenvp{}, \s{}) = \textsf{postwalk}(\atenv{}, \ty{}, \textsf{f})\\
+                   &\textsf{f}(\atenv{}, {\HMaptwo{\HMapreq{1}}{\HMapreq{2}}}) = \register{}(\atenv{},\HMaptwo{\HMapreq{1}}{\HMapreq{2}})\\
+                   &\textsf{f}(\atenv{}, \ty{}) = (\atenv{}, \ty{}), \text{otherwise}
+    \end{array}
+    %\\\\
+    %\inferrecOp{} : \atenv{} \rightarrow \atenv{}\\
+    %\inferrecOp{} = \squashglobal{} \circ \squashlocal{}
+  \end{array}
+
+  \begin{array}{lllll}
+    \textsf{groupSimilarReq} : \atenv{} \rightarrow \ova{\ova{\alias{}}}\\
+    \textsf{groupSimilarReq}(\atenv{}) = 
+                   [\ova{\alias{}} | \ova{\kw{}} \in \textsf{dom}(\textsf{r}),
+                                     \ova{\alias{}} = \textsf{remDiffTag}(\textsf{similarReq}(\ova{\kw{}}))
+                                     ]\\
+    \begin{array}{lllll}
+      \text{where} \\
+      \begin{array}{lllll}
+                   &\textsf{r} = \{(\ova{\kw{}}, \ova{\alias{}}) | \HMaptwo{\{\ova{\kw{}\ \ty{}}\}}{\HMapopt{}} \in \textsf{rng}(\atenv{}[\aenv{}]),
+                                                                              \ova{\alias{}} = \textsf{matchingReq}(\ova{\kw{}})\}\\
+                   &\textsf{matchingReq}(\ova{\kw{}}) = [\alias{} | (\alias{}, \HMaptwo{\HMapreq{}}{\HMapopt{}}) \in \atenv{}]\\
+                   &\textsf{similarReq}(\ova{\kw{}}) = [\alias{} | \ova{\kwp{}}^n \subseteq \ova{\kw{}}^m,
+                                                                   m-n \leq \textsf{thres}(m),
+                                                                   \alias{} \in \textsf{r}[\ova{\kwp{}}]]\\
+                   &\textsf{remDiffTag}(\ova{\alias{}}) = [\aliasp{} | \aliasp{} \in \ova{\alias{}},
+                                                                       \text{ if } (\kw{}, \kwp{}) \in \textsf{req}(\atenv{}, \aliasp{})
+                                                                       \text{ and } 
+                                                                       \bigvee\ova{(\kw{}, \kwpp{}) \in \textsf{req}(\atenv{}, \alias{})}
+                                                                       \text{ then }
+                                                                       \ova{\kwp{} = \kwpp{}}
+                                                                      ]
+      \end{array}
+    \end{array}
+  \end{array}
+\end{mathpar}
+\caption{
+    Definition of $\squashglobal{}(\atenv{}) = \atenvp{}$ %\\
+%  Step 3 summary: First ensure all HMaps correspond to an alias. Then merge
+%aliases that point to a HMaps with identical required keysets (aliases must point to exactly one
+%top-level HMap, no unions).
+  }
+  \label{infer:fig:squashglobal}
+\end{figure*}
+
+
+We now describe the algorithm for generating recursive type aliases.
+The first step \squashlocal{} creates recursive types from directly nested types.
+It folds over each type in the type environment, first
+creating aliases with \aliashmap{}, and then
+attempting to merge these aliases by \squashall{}.
+
+A type is aliased by \aliashmap{} either if it is a union containing a HMap,
+or a HMap that is not a member of a union.
+While we will use the structure of HMaps to determine when to create a recursive
+type, keeping surrounding type information close to HMaps helps create more
+compact and readable recursive types.
+The implementation uses a post-order traversal via \textsf{postwalk},
+which also threads an annotation environment as it applies
+the provided function.
+
+Then, \squashall{} follows each alias \alias{i} reachable from the type environment
+and attempts to merge it with any alias reachable from \alias{i}.
+The \squash{} function maintains 
+a set of already visited aliases to avoid infinite loops.
+
+The logic for merging aliases is contained in \mergealiases{}.
+Merging \alias{2} into \alias{1} involves mapping \alias{2}
+to \alias{1} and \alias{1} to the join of both definitions.
+Crucially, before joining, we rename occurrences of 
+\alias{2} to \alias{1}. This avoids a linear increase in the
+width of union types, proportional to the number of merged aliases.
+%For example,
+%without this, if we further merge \alias{3} into \alias{1},
+%like \Unionsplice{{\alias{1}}\ {\alias{2}}\ {\alias{3}}} occur
+%instead of simply \alias{1}.
+The running time of our algorithm is proportional to the
+width of union types (due to the quadratic combination of
+unions in the join function) and this optimization greatly
+helped the running time of several benchmarks.
+To avoid introducing infinite types,
+top-level references to other aliases we are merging with
+are erased with the helper \textsf{f}.
+
+The \shouldmergeOp{} function determines whether two types are related enough
+to warrant being merged. We present our current implementation, which is simplistic,
+but is fast and effective in practice, but many variations are possible.
+Aliases are merged if they are all HMaps (not contained in unions), that
+contain a keyword key in common, with possibly disjoint mapped values.
+For example, our opening example has the \clj{:op} key mapped to either
+\clj{:leaf} or \clj{:node}, and so aliases for each map would be merged.
+Notice again, however, the join operator does not collapse differently-tagged
+maps, so they will occur recursively in the resulting alias, but separated by union.
+
+Even though this implementation of \shouldmergeOp{} does not directly utilize the aliased
+union types carefully created by \aliashmap{}, they still affect the final types.
+For example, squashing \clj{T} in
+\begin{lstlisting}[language=Clojure]
+(defalias T 
+  (U nil '{:op :node :left '{:op :leaf ...} ...}))
+\end{lstlisting}
+results in 
+\begin{lstlisting}[language=Clojure]
+(defalias T 
+  (U nil '{:op :node :left T ...} '{:op :leaf ...}))
+\end{lstlisting}
+rather than
+\begin{lstlisting}[language=Clojure]
+(defalias T2 (U '{:op :node :left T ...}
+                '{:op :leaf ...}))
+(defalias T (U nil T2))
+\end{lstlisting}
+An alternative implementation of \shouldmergeOp{} we experimented with included computing sets of keysets
+for each alias, and merging if the keysets overlapped. This, and many of our early experimentations,
+required expensive computations of keyset combinations and traversals over them that could be emulated
+with cruder heuristics like the current implementation.
+
+\Dsubsection{Pass 3: Squash globally}
+\label{infer:sec:formal:inference-phase:squash-global}
+
+The final step combines aliases
+without restriction on whether they occur ``together''.
+This step combines type information between different positions
+(such as in different arguments or functions) so that any deficiencies
+in unit testing coverage are massaged away.
+
+The \squashglobal{} function is the entry point in this pass,
+and is similar in structure to the previous pass.
+It first creates aliases for each HMap via \aliassinglehmap{}.
+Then, HMap aliases are grouped and merged in \squashhorizonally{}.
+
+The \aliassinglehmap{} function first traverses the type environment
+to create HMap aliases via \singlehmap{}, and binds the resulting
+envionment as \atenvp{}.
+Then, alias environment entries are updated with \textsf{f}, whose first
+case prevents re-aliasing a top-level HMap, before we call \singlehmap{}
+(\singlehmap{}'s second argument accepts both \x{} and \alias{}).
+The \ty{}(\ova{\s{}}) syntax represents a type \ty{} whose constructor
+takes types \ova{\s{}}.
+
+After that, \squashhorizonally{} creates groups of related
+aliases with \textsf{groupSimilarReq}.
+Each group contains HMap aliases whose required keysets are similar,
+but are never differently-tagged.
+The code creates a map \textsf{r} from keysets to groups of HMap
+aliases with that (required) keyset.
+Then, for every keyset \ova{\kw{}}, \textsf{similarReq} adds aliases to the group
+whose keysets are a subset of \ova{\kw{}}. The number of missing
+keys permitted is determined by \textsf{thres}, for which we do not provide a
+definition.
+Finally, \textsf{remDiffTag} removes differently-tagged HMaps from each group,
+and the groups are merged via \mergealiases{} as before.
+
+\Dsubsection{Implementation}
+
+Further passes are used in the implementation.
+In particular, we trim unreachable aliases and remove aliases
+that simply point to another alias (like \alias{2} in \mergealiases{})
+between each pass.
+
+% Things we could prove:
+% - update is commutative

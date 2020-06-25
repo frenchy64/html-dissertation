@@ -1,0 +1,1344 @@
+\chapter{Background}
+
+Clojure is a dialect of Lisp, and so supports metaprogramming
+via macros.
+This immediately poses an interesting problem for Clojure
+type systems: how do we check a macro call?
+Ideally, we don't want to require special typing rules for each
+macro, since that imposes additional burden on the programmer
+to define special rules for their own macros.
+On the other hand, sometimes its helpful to write custom rules
+for customized error messages, or a higher-level specification
+for a macro's usage.
+
+In this part we explore several solutions to this problem,
+from the standard approach of expanding macros to
+primitive forms before checking, to more involved solutions
+that allow extensible typing rules for each macro.
+
+Several constraints guide us through our designs.
+There is a question of soundness: does what we actually
+check match up with the code being evaluated?
+There is a natural tension between soundness and user extensibility.
+Allowing custom rules for macros gives a kind of flexibility
+that makes it hard to relate type checking semantics with
+the running code---which is the whole idea behind a soundness result.
+On the other hand, expanding code before checking ensures
+we check the actual code being run.
+In all of these cases, wrappers that communicate information
+to the type system are needed, but they interact
+with evaluated code differently.
+
+We also consider the experience of using these solutions.
+Error messages can be unrelated to the source problem
+if pre-expanding code, but we may miss actual errors
+by using a poorly written typing rule.
+We are interested in the difficultly of extending each system,
+including any additional annotation burden,
+additional knowledge needed to manage evaluation semantics
+in typing rules, and additional type system knowledge required
+to write typing rules. Finally, we also consider implications
+to type checking performance and amenability to iterative development.
+
+The following chapters present several designs of Typed Clojure,
+their extensibility stories, and general implementation concerns for
+Clojure type system designers.
+
+%{
+%\begin{verbatim}
+%- Problem
+%  - Clojure is a Lisp with macros
+%  - don't want to write typing rules for each macro
+%    - don't want to burden users
+%    - so we expand them before checking
+%    - but sometimes it's really helpful to write custom rules
+%- Possible solutions
+%  - pre expansion
+%  - interleaved analysis and evaluation
+%- Constraints
+%  - Soundness?
+%    - tension between soundness and user extensibility
+%  - advantages of pre-expanding
+%    - can't have "wrong" expansion in pre-expanded code
+%      - we check the actual expansion that gets wr
+%  - wrapper macros needed in all of these systems
+%\end{verbatim}
+%}
+
+\chapter{Expand before checking}
+
+Typed Clojure's initial design was inspired by Typed Racket,
+which checks Racket code by first expanding until it consists
+of only primitives, and then checking using fixed rules for each
+primitive.
+This chapter goes into this design in more detail, starting
+with our choice of analyzer and then how to handle extensibility.
+
+\section{Upfront Analysis with \texttt{tools.analyzer}}
+
+Instead of using Clojure's compiler to analyze code,
+we opted to use \texttt{tools.analyzer}, a standalone nano-pass
+analyzer providing an idiomatic map-based AST format providing
+passes for hygienic transformations and Java reflection resolution.
+
+%{
+%\begin{verbatim}
+%- Pros to expanding up front:
+%  - Separation of concerns (expander does expansion)
+%- Cons to expanding up front:
+%  - Lose contextual information from unexpanded macros while type checking.
+%  - Requires wrapper macros which pollute runtime expansions and
+%    often require copying implementation details (brittle).
+%\end{verbatim}
+%}
+
+\figref{fig:analyzer:control-flow-pre-expand} demonstrates 
+how Typed Clojure checks code using the pre-expansion approach.
+To simplify presentation we assume \texttt{tools.analyzer}
+uses only 2 passes. The first pass \texttt{analyze} creates
+a bare AST with no platform specific information.
+The second pass is composed of two tree traversals.
+The first is a pre-traversal \texttt{pre-passes} which
+is called before we visit the children of an AST node.
+The second is a post-traversal \texttt{post-passes} which
+is called after we visit the children of an AST node.
+
+This arrangement is convenient as a type system implementer,
+insofar as there is a clean separation of concerns: the analyzer
+handles expansion and evaluation, while the type system
+merely checks.
+However, much contextual information is lost from the expansion
+process that is needed for checking.
+We now present how we surmount this challenge while still
+preserving the pre-expanded checking model.
+
+\begin{figure}
+$$
+  \begin{array}{r||l|l|l|}
+    \text{Time} & \text{\clj{(let [...]}} & \text{\clj{(cond ...}} & \text{\clj{(+ ...)))}}\\
+    \hline
+     0          & \text{\clj{analyze}}^{>}    &                             &                      \\
+     1          &                             & \text{\clj{analyze}}^{>}    &                      \\
+     2          &                             &                             & \text{\clj{analyze}}^{>} \\
+     3          &                             &                             & \text{\clj{analyze}}^{<} \\
+     4          &                             & \text{\clj{analyze}}^{<}    &                      \\
+     5          & \text{\clj{analyze}}^{<}    &                             &                      \\
+     6          & \text{\clj{pre-passes}}^{>} &                             &                      \\
+     7          &                             & \text{\clj{pre-passes}}^{>} &                      \\
+     8          &                             &                             & \text{\clj{pre-passes}}^{>} \\
+     9          &                             &                             & \text{\clj{post-passes}}^{<} \\
+     10         &                             & \text{\clj{post-passes}}^{<}&                      \\
+     11         & \text{\clj{post-passes}}^{<}&                             &                      \\
+     12         & \text{\clj{check}}^{>}      &                             &                      \\
+     13         &                             & \text{\clj{check}}^{>}      &                      \\
+     14         &                             &                             & \text{\clj{check}}^{>} \\
+     15         &                             &                             & \text{\clj{check}}^{<} \\
+     16         &                             & \text{\clj{check}}^{<}      &                      \\
+     17         & \text{\clj{check}}^{<}      &                             &                      \\
+  \end{array}
+$$
+%\begin{verbatim}
+%time | (let [...]  | (cond ...   | (+ ...)))
+% |   | ---------------------------------------
+% v   | analyze    >|             |
+%     |             | analyze >   |
+%     |             |             | analyze    >
+%     |             |             |<analyze
+%     |             |<analyze     |
+%     |<analyze     |             |
+%     | pre-passes >|             |
+%     |             | pre-passes >|
+%     |             |             | pre-passes >
+%     |             |             |<post-passes
+%     |             |<post-passes |
+%     |<post-passes |             |
+%     | check>      |             |
+%     |             | check>      |
+%     |             |             | check>
+%     |             |             |<check
+%     |             |<check       |
+%     |<check       |             |
+%\end{verbatim}
+  \caption{Illustrative control flow when
+  using \texttt{tools.analyzer} to expand code via \clj{analyze} and several passes,
+  followed by Typed Clojure checking.
+  The partial expression \clj{(let [...] (cond ... (+ ...)))}
+  was chosen since it has at least 3 levels of nesting.
+  Many more levels will be revealed after expansion by \clj{analyze}, which we do not picture.
+  ${}^>$ and ${}^<$ indicate work done to a node before and after processing its children, respectively.
+  }
+  \label{fig:analyzer:control-flow-pre-expand}
+\end{figure}
+
+\section{Extensibility}
+
+%{
+%\begin{verbatim}
+%- Problem
+%  - need to communicate between type system and Clojure runtime
+%- Constraints
+%  - a "typed" program must evaluate unchanged via normal Clojure compilation
+%    - extensions must be done via macros provided by Typed Clojure
+%      - imported and used as normal by Clojure programmers
+%    - in contrast to #lang system
+%      - which always guarantees the type system is in charge of expanding
+%      - (both approaches use macros for extension and to share information)
+%- how to communicate to type system via expanded code?
+%  - eg. tc-ignore, ann-form
+%  - in Racket you would use syntax properties, or side effects
+%  - Clojure has metadata, but not as robust as syntax properties
+%    - how metadata is compiled is implementation dependent (I forgot how?)
+%    - we decided to emit special `do` forms to communicate with type system
+%      - (do :special-form ...)
+%      - "variable protocol" in Advanced Macrology
+%  - side effects
+%    - Clojure's compilation strategy is straightforward
+%      - files are just sequences of top-level forms
+%      - evaluate each in turn
+%      - side effects of expanding/evaluating a previous form
+%        can be used to compile a subsequent form
+%      - members of top-level `do` forms are also top-level forms, and thus
+%        are evaluated in turn
+%    - Typed Clojure collects global type annotations by evaluation side effects
+%      - macroexpansion side effects not used in case AOT compiled
+%- how to define custom rules?
+%  - Approach 1: custom expansions for embedding typing rules in expansion
+%  - Approach 2: "typing rules by analogy"
+%    - lose ability to check actual expansion
+%\end{verbatim}
+%}
+
+Now that we have outlined how we use \texttt{tools.analyzer} to pre-expand code before type checking,
+we describe Typed Clojure's approach to sharing information between the programs it checks
+and the type system.
+We deviate significantly from Typed Racket's approach~\cite{Culpepper07advancedmacrology}
+mostly because of differences in compilation models between Clojure and Racket.
+
+One constraint we must consider in Typed Clojure is that a ``typed'' Clojure program must
+evaluate unchanged under normal Clojure compilation. In Racket, we could instead specify
+the language under which a module is compiled using the \texttt{\#lang} directive---this is Typed
+Racket's approach. 
+In Clojure, there is just one language and no built-in facilities to extend the compilation
+process, so Typed Clojure provides a suite of macros for communicating with the type system that
+users must explicitly load and use.
+
+These macros come in several flavors:
+
+\begin{itemize}
+  \item syntax-based communication to type checker,
+  \item side-effectful communication to type checker, and
+  \item wrappers for existing untyped macros.
+    %to avoid checking complex expansions
+    %or provide .
+\end{itemize}
+
+We discuss each in the following sections.
+
+\subsection{Syntax-based communication}
+
+A simple macro provided by Typed Clojure that communicates to the checker
+via syntax is \clj{tc-ignore}, which takes a number of forms, places
+them in a \clj{do} form, and tells the checker to ignore the resulting
+form and assign it type \clj{Any}.
+
+\begin{figure*}
+\begin{lstlisting}[language=Clojure]
+(defmacro tc-ignore 
+  "Ignore forms in body during type checking"
+  [& body]
+  `(do :clojure.core.typed.special-form/special-form
+       :clojure.core.typed/tc-ignore
+       ~@(or body [nil])))
+\end{lstlisting}
+  \caption{Public facing macro definition for \clj{tc-ignore}.}
+  \label{fig:analyzer:tc-ignore}
+\end{figure*}
+
+\figref{fig:analyzer:tc-ignore} shows the implementation of the \clj{tc-ignore} macro.
+It demonstrates the \clj{do}-special-form protocol:
+if the first member of a \clj{do} is the keyword
+\[
+\cljmath{:clojure.core.typed.special-form/special-form},
+\]
+the following keyword names a special typing rule to use
+to check the entire form.
+A corresponding typing rule must then be registered with the type checker under this name,
+like in \figref{fig:analyzer:tc-ignore-do-op}.
+
+\begin{figure*}
+\begin{lstlisting}[language=Clojure]
+(defmethod internal-special-form :clojure.core.typed/tc-ignore
+  [expr expected]
+  (tc-ignore/check-tc-ignore check-expr expr expected))
+\end{lstlisting}
+  \caption{Registering a corresponding typing rule for \clj{tc-ignore} via the \clj{do}-special-form protocol.}
+  \label{fig:analyzer:tc-ignore-do-op}
+\end{figure*}
+
+Clojure's compilation and runtime models make \clj{do} statements an excellent candidate for the basis of
+an extensible syntax-based communication protocol.
+First, it naturally inherits the top-level characteristics of \clj{do}, which is key to defining
+wrapper macros that operate at the top-level.
+A usage of \clj{tc-ignore} that relies on this is demonstrated in \figref{fig:analyzer:tc-ignore-usage}.
+Second, it avoids the need to pre-expand its arguments to attach information, or
+have special cases for particular arguments.
+On the other hand, a communication protocol based on attaching metadata properties
+would require pre-expanding arguments, since metadata is lost on macroexpansion,
+and in some cases would not be possible, since many common Clojure forms do not support metadata
+(such as keywords, numbers, and nil).
+Third, the information can be compiled away using standard techniques,
+since they are constant statements---extra information can be provided via a map of constant values
+placed after the typing rule name, as in
+the definition of \clj{ann-form} (\figref{fig:analyzer:ann-form-definition}).
+
+\begin{figure*}
+\begin{lstlisting}[language=Clojure]
+(defmacro ann-form
+  "Annotate a form with an expected type."
+  [form ty]
+  `(do :clojure.core.typed.special-form/special-form
+       :clojure.core.typed/ann-form
+       {:type '~ty}
+       ~form))
+\end{lstlisting}
+  \caption{The definition of \clj{ann-form} shows how to communicate extra information to the type checker}
+  \label{fig:analyzer:ann-form-definition}
+\end{figure*}
+
+While a strong choice, there are some downsides to basing our communication protocol on \clj{do}
+statements.
+There is no guarantee the information will be compiled away at runtime, and
+thus may contribute to bloating the runtime.
+On the other hand, \clj{tools.analyzer} must be carefully configured to not erase these constant
+values before Typed Clojure can access them.
+
+Alternative \clj{do}-based protocols could be similarly effective
+such as attaching metadata directly to the symbol \clj{do} or list \clj{(do ...)}.
+We felt embedding the information directly in programs had the best chance of forward-compatibility,
+since the interaction between metadata and compilation is not well documented and
+can be platform-dependent (in our experience ClojureScript has handled some cases differently,
+like evaluating metadata instead of simply quoting it as in Clojure).
+
+\begin{figure}
+\begin{lstlisting}[language=Clojure]
+(tc-ignore
+  (defmacro reverse-app [a f] `(~f ~a))
+  (reverse-app 1 inc)) ;=> 2
+\end{lstlisting}
+  \caption{Example top-level usage of \clj{tc-ignore}
+           where the second form must expand after the first evaluates.
+  It works because \clj{tc-ignore} wraps only with \clj{do}.}
+  \label{fig:analyzer:tc-ignore-usage}
+\end{figure}
+
+\subsection{Side-effectful communication}
+\label{analyzer:extensibility:side-effects}
+
+Racket has a sophisticated system for managing compile-time side effects
+to accompany its module system.
+Clojure does not have a module system, and instead relies on conventions
+and a simple compilation model to write effective programs.
+
+The unit of compilation in Clojure is a top-level form. A top-level Clojure form
+is guaranteed to have all previous top-level forms fully expanded
+and evaluated before it is expanded and evaluated itself.
+This blurs the lines between compile-time and runtime, compared to the
+distinct phases of Racket compilation.
+
+When checking a file with Typed Clojure, we have similar guarantees:
+when checking a top-level form, we can depend on the fact that all
+previous top-level forms have been expanded, evaluated, and checked,
+and that the current form has been fully expanded.
+
+Thus, we have a choice of (at least) three times to send side-effectful communication
+to the type checker:
+expansion-time, evaluation-time, and checking-time.
+\figref{fig:analyzer:ann-definition} shows the most frequently used
+side-effectful macro \clj{ann}, which registers the type of a var in the
+global environment.
+It expands to code that uses internal function \clj{ann*}, which does
+the registering. This is a \emph{evaluation-time} side effect,
+and we similarly perform most communication at this time.
+We now elaborate on why this is a good choice.
+
+A previous implementation of Typed Clojure (which was used by CircleCI
+in \secref{sec:casestudy}) only collected top-level annotations
+from \clj{ann} at checking-time. This forced Typed Clojure to recursively
+check other files just to collection annotations.
+We decided the natural behavior of rechecking a file would be to
+recheck its dependencies so, among other benefits, top-level annotations
+would be kept up-to-date.
+Unfortunately, the checker was much slower at evaluating files
+than the Clojure compiler, meaning iterative development was hampered.
+To fix this, we made checking of transitive file dependencies optional, and
+so dependencies containing top-level annotations would potentially only 
+be evaluated by the Clojure compiler.
+Evaluation-time was then the natural time to collect these annotations.
+
+A side-effect of this design choice is that it is no longer a sound idea to
+infer types for unannotated top-level bindings. In the aforementioned 
+implementation, if the checker finds an unannotated top-level \clj{def}
+like \clj{(def a 1)}, it will update the global environment with the 
+inferred type of the right-hand-side.
+Now that transitive dependencies are optionally checked, it is not guaranteed
+the checker will infer these annotations, and so more top-level annotations
+via \clj{ann} are needed to recover consistent checking behavior.
+This unfortunately increases the annotation burden even more, however the rewards
+are great.
+We believe that Clojure programmers will enjoy the ability to rapidly recheck
+small parts of their code base, just like they are used to in untyped Clojure.
+
+Now, we discuss the merits of collection at evaluation-time over expansion-time.
+We avoid side-effects at expansion-time because Clojure code can be
+evaluated in two ways: from the original source code in on-the-fly compilation mode, and 
+from precompiled JVM bytecode in ahead-of-time compilation mode.
+In the latter, code is expanded ahead-of-time (potentially in a different environment)
+and thus expansion-time side-effects are lost.
+We applied the standard solution to this problem: remove the side-effect from
+the macro itself and move it to the evaluation of the code it expands into.
+
+
+%\begin{verbatim}
+%- not forced to recursively check other files just to collect annotations
+%  - problem identified with CircleCI
+%  - simply need to evaluate a file normally
+%  - in turn requires more annotations
+%    - tradeof between annotation burden and performance
+%- avoid relying on expansion-time side effects
+%  - lost with AOT compilation
+%- "staged at checking time": under Typed Racket AOT compilation, it stages global type annotations for eval time
+%  - we don't have a similar mode
+%    - compiling a Typed Clojure file does not require checking
+%\end{verbatim}
+
+
+\begin{figure*}
+\begin{lstlisting}[language=Clojure]
+(defmacro ann 
+  "Register top-level var with type."
+  [varsym typesyn]
+  (let [qsym (qualify-in-current-ns varsym)
+        opts (meta varsym)
+        check? (not (:no-check opts))]
+    `(tc-ignore (ann* '~qsym '~typesyn '~check? '~&form))))
+(defn ann* 
+  "Internal use only. Use ann."
+  [qsym typesyn check? form]
+  ; omitted - registers `qsym` at type `typesym`
+  )
+\end{lstlisting}
+  \caption{Implementation of \clj{ann}, which expands to code that registers types at evaluation-time.}
+  \label{fig:analyzer:ann-definition}
+\end{figure*}
+
+\subsection{Wrapper macros}
+
+Several situations call for wrapper macros for existing untyped macros.
+In practice, this often means the type system author provides an alternative
+implementation for a macro, and the type system user
+replaces any usages of the original macro in type-checked code with the alternative implementation.
+Sometimes this choice is aesthetic, providing a prettier 
+way to write annotations. For example, the \clj{fn} wrapper
+enables writing annotations like
+\clj{(fn [a :- Int] ...)}
+instead of the more verbose
+\clj{(ann-form (fn [a] ...) [Int -> Any])}.
+
+The more pressing need for wrapper macros when checking pre-expanded
+code is to manage complex expansions.
+Some macro expansions are too complex for Typed Clojure to reason about,
+so it becomes necessary to rewrite these expansions to be more palatable
+for the checker.
+For example, the \clj{for} macro is a lazy sequence builder using
+a list-comprehension syntax---however it expands into local
+loops using local mutable state, which are problematic to check.
+The wrapper macro for \clj{for} expands (and thus evaluates) similarly, but inserts user-provided
+type annotations strategically into the expansion so it more easily type checks.
+
+The problem with this kind of wrapper macros is that large amounts
+of implementation code must be copied to preserve the original semantics.
+Instead of checking a higher-level specification of the macro's behavior,
+we are tied closely to a particular implementation.
+This has the advantage of checking the actual code that gets evaluated, but
+unfortunately
+requires the type system writer to closely follow the original implementations
+(hampering both backwards- and forwards-compatibility with versions of the original macro).
+Furthermore, users not only must use wrapper macros where necessary, but
+also recognize when they are required---usually attempting to check a complex
+expansion yields an incomprehensible error as Typed Clojure fails to check it.
+It is rarely apparent that a wrapper macro is needed from such an error message.
+
+\chapter{Interleaved expansion and checking}
+
+The previous chapter outlined a design for Typed Clojure that fully expands code
+before checking.
+We identified several problems with the user experience of Typed Clojure's initial design,
+including bad error messages, and excessive copying of macro implementations for wrapper
+macros.
+Additionally, we identified several issues with \texttt{tools.analyzer} that we have
+not yet discussed.
+
+First, \texttt{tools.analyzer}'s goals of being mostly platform-agnostic made analysis particularly 
+slow, and so added an undesirable performance overhead to type checking.
+In particular, a copy of the
+global scope is maintained for every namespace. While it enables a convenient platform-agnostic API
+for symbol resolution,
+it comes at a performance cost since it must be updated (from scratch) frequently.
+Furthermore, some macroexpansion side effects are not (yet) recognized by the analyzer
+which means analysis sometimes deviates from Clojure compiler, an undesirable situation
+since Typed Clojure intends to model how code runs \emph{outside} of type checking.
+Unfortunately, fixing some of these differences would require even more frequent costly updates.
+
+Second, it is impractical to recover contextual information lost via analysis.
+This is both because \texttt{tools.analyzer} has no way of representing unanalyzed
+code (so there is no choice but to expand immediately), and
+because \texttt{tools.analyzer} uses at least 2 passes over the AST
+(so there is no obvious place to recover contextual information since pre-traversal
+passes run \emph{after} the entire program has been expanded).
+For example, \figref{fig:analyzer:control-flow-pre-expand}
+illustrates \texttt{tools.analyzer}'s control flow with just 2 traversals.
+Say at time 1 we wished to take advantage of the unexpanded \clj{cond}
+form with a special rule (before it expands and contextual information is lost).
+In fact, \texttt{tools.analyzer} provides the extension point \clj{macroexpand-1}
+for just this purpose, which allows the user to specify exactly how a form is expanded.
+Unfortunately, time 0 introduced local bindings that are unhygienic, and the hygienic
+transformation pass (required for checking because occurrence typing's propositions do not recognize variable shadowing)
+happens at time 6 with \clj{pre-passes}.
+So, there is no room for a checking rule for \clj{cond} until time 13, well
+after the \clj{cond} is expanded away.
+
+Fortunately, \texttt{tools.analyzer}'s design and implementation
+is otherwise brilliant and innovative, and forms a great base to build a new Clojure analyzer better suited to help solve
+many of the aforementioned analysis and checking problems---we did exactly that in \texttt{core.typed.analyzer}.
+
+\section{Interleaved Analysis with \texttt{core.typed.analyzer}}
+
+To replace \texttt{tools.analyzer}, we built \texttt{core.typed.analyzer}. In this section,
+we describe how \texttt{core.typed.analyzer} works, and outline both the ideas we repurposed
+from \texttt{tools.analyzer} and those specific to \texttt{core.typed.analyzer}.
+
+\subsection{Overview}
+
+The main feature of \texttt{core.typed.analyzer} is the ability to stop and resume
+analysis at any point, while still supporting the essentials of a general-purpose Clojure analyzer.
+Supporting this requires several key innovations and restrictions over \texttt{tools.analyzer}.
+First, a new AST node type for partially expanded forms is needed to return a paused analysis.
+Second, the analyzer must have the ability to incrementally perform a small amount of analysis
+(on the order of expanding one macro) to provide fine-grained control over the AST.
+Third, all AST traversals must be fused into one traversal to minimize
+the bookkeeping needed to manage the AST.
+
+To this end, \texttt{core.typed.analyzer} provides an API of 4 functions.
+First, \clj{(unanalyzed form env)} creates an \clj{:unanalyzed} AST node
+that pauses the analysis of \clj{form} in local environment \clj{env}.
+Second, \clj{(analyze-outer ast)} analyzes the outermost form represented by \clj{ast}
+further by roughly one macroexpansion if possible, otherwise it returns \clj{ast}.
+Third, \clj{(run-pre-passes ast)} and \clj{(run-post-passes ast)}
+decorate \clj{ast} with extra information, used before and after visiting its children,
+respectively.
+
+To sample how it feels to use this API to implement a type checker, we now
+walk through checking \clj{(let [...] (cond ... (+ ...)))} in \figref{fig:analyzer:typed-analyzer-overview}.
+To check the outermost \clj{let},
+we use \clj{unanalyzed} to create an initial AST from a entire form at time 0.
+Then at time 1, the checker calls \clj{analyze-outer} zero or more times, either 
+until a special rule for partially expanded code is triggered
+or to a fixed point.
+Next at time 2 and 3 we decorate our AST node with \clj{run-pre-passes} (adding hygienic bindings)
+before calling \clj{check}.
+After checking its children during time 4-13, at time 14 and 15 we use \clj{run-post-passes}
+to add the rest of the decorations (e.g., resolving interop reflection)
+before any final checks from \clj{check}.
+The interleaving of operations using \texttt{core.typed.analyzer} is clear to see when
+compared to the same example using \texttt{tools.analyzer} 
+(\figref{fig:analyzer:control-flow-pre-expand}).
+
+Now with the interleaving analyzer, we can solve the problem we posed at the beginning of this chapter
+of wanting a custom typing rule for \clj{cond}: we simply
+limit the number of expansions done via \clj{analyze-outer} at time 4 
+before calling \clj{check} (\figref{fig:analyzer:typed-analyzer-overview}).
+The call to \clj{run-pre-passes} at time 2 will make any introduced let bindings hygienic,
+and so it's safe to reason about them with occurrence typing, and thus Typed Clojure.
+
+
+\begin{figure*}
+$$
+  \begin{array}{r||l|l|l|}
+    \text{Time} & \text{\clj{(let [...]}}            & \text{\clj{(cond ...}}          & \text{\clj{(+ ...)))}}          \\
+    \hline
+     0          & \text{\clj{unanalyzed}}^{>}        &                                 &                                 \\
+     1          & \text{\clj{analyze-outer}}^{*}     &                                 &                                 \\
+     2          & \text{\clj{run-pre-passes}}^{>}    &                                 &                                 \\
+     3          & \text{\clj{check}}^{>}             &                                 &                                 \\
+     4          &                                    & \text{\clj{analyze-outer}}^{*}  &                                 \\
+     5          &                                    & \text{\clj{run-pre-passes}}^{>} &                                 \\
+     6          &                                    & \text{\clj{check}}^{>}          &                                 \\
+     7          &                                    &                                 & \text{\clj{analyze-outer}}^{*}  \\
+     8          &                                    &                                 & \text{\clj{run-pre-passes}}^{>} \\
+     9          &                                    &                                 & \text{\clj{check}}^{>}          \\
+     10         &                                    &                                 & \text{\clj{run-post-passes}}^{<}\\
+     11         &                                    &                                 & \text{\clj{check}}^{<}          \\
+     12         &                                    & \text{\clj{run-post-passes}}^{<}&                                 \\
+     13         &                                    & \text{\clj{check}}^{<}          &                                 \\
+     14         & \text{\clj{run-post-passes}}^{<}   &                                 &                                 \\
+     15         & \text{\clj{check}}^{<}             &                                 &                                 \\
+  \end{array}
+$$
+
+  \caption{Illustrative control flow for interleaved checking and analysis using
+  \texttt{core.typed.analyzer}. ${}^*$ denotes zero or more calls.
+  }
+  \label{fig:analyzer:typed-analyzer-overview}
+\end{figure*}
+
+\subsection{Implementation}
+
+We now go into more detail about how \texttt{core.typed.analyzer}
+is implemented as a modification of \texttt{tools.analyzer}
+and the various tradeoffs that were chosen.
+
+To support the requirement of \clj{analyze-outer} performing as little
+analysis as possible, we converting the \clj{analyze} function from
+a full AST traversal to a pre-traversal that only visits the current node.
+This mostly involved substituting recursive
+calls to \clj{analyze-form} with \clj{unanalyzed}, as we
+can see from porting the \clj{parse-if} helper function
+  in \figref{fig:analyze:parse-if-port}.
+
+\begin{figure*}
+\begin{lstlisting}[language=Clojure]
+; tools.analyzer version
+(defn parse-if
+  "Convert a Clojure `(if <test> <then> <else>)` form to an AST."
+  [[_ test then else :as form] env]
+  {:op      :if
+   :form     form
+   :env      env
+   :test     (__red>analyze-form<red__ test (assoc env :context :ctx/expr))
+   :then     (__red>analyze-form<red__ then env)
+   :else     (__red>analyze-form<red__ else env)
+   :children [:test :then :else]})
+
+; core.typed.analyzer version
+(defn parse-if
+  "Convert a Clojure `(if <test> <then> <else>)` form to an AST."
+  [[_ test then else :as form] env]
+  {:op      :if
+   :form     form
+   :env      env
+   :test     (__red>unanalyzed<red__ test (assoc env :context :ctx/expr))
+   :then     (__red>unanalyzed<red__ then env)
+   :else     (__red>unanalyzed<red__ else env)
+   :children [:test :then :else]})
+\end{lstlisting}
+
+  \caption{Example of porting a \texttt{tools.analyzer} function
+  to \texttt{core.typed.analyzer} using \clj{unanalyzed} (differences highlighted in \textcolor{red}{red}).
+  }
+  \label{fig:analyze:parse-if-port}
+\end{figure*}
+
+Porting the nano-pass machinery was more involved, however
+we have a similar goal: passes must perform the minimum possible
+work so they can be easily composed as-needed.
+Thankfully, passes in \texttt{tools.analyzer} are written modularly,
+so we can straightforwardly pick a subset of them we need for \texttt{core.typed.analyzer}.
+To connect the passes, metadata declares dependencies on other passes
+and the traversal strategy.
+We can see this in action for \clj{constant-lift} (\figref{fig:analyzer:constant-lift}),
+which is declared to be part of a post-traversal
+that must run after \clj{elide-meta} and \clj{analyze-host-expr}.
+
+\begin{figure}
+\begin{lstlisting}[language=Clojure]
+(defn constant-lift
+  "Like clojure.tools.analyzer.passes.constant-lifter/constant-lift but
+   transforms also :var nodes where the var has :const in the metadata
+   into :const nodes and preserves tag info"
+  {:pass-info __red>{:walk :post, :depends #{},
+               :after #{#'elide-meta #'analyze-host-expr}}<red__}
+  [ast]
+  (merge (constant-lift* ast)
+         (select-keys ast [:tag :o-tag :return-tag :arglists])))
+\end{lstlisting}
+  \caption{Passes in \texttt{tools.analyzer} are defined as regular functions,
+  with \clj{:pass-info} metadata (\textcolor{red}{red}) declaring dependencies on other passes and tree walking strategy.}
+  \label{fig:analyzer:constant-lift}
+\end{figure}
+
+A scheduler compiles the passes according to this metadata into as few traversals as possible.
+We reuse this setup of scheduled passes in \texttt{core.typed.analyzer},
+with the restriction that all passes compile into one traversal.
+We could convert many existing pre- and post-traversal passes without much modification.
+Only the most crucial pass required much modification:
+the hygienic transformation pass \clj{uniquify-locals}.
+It must be a pre-traversal in \texttt{core.typed.analyzer} (for reasons we have already discussed),
+and was modified from a full tree walk.
+
+%Furthermore, passes are almost always extensible via Clojure's multimethods, so it is trivial to add
+%support for new AST types, like an AST representation for unanalyzed code.
+
+To help support \clj{:unanalyzed} AST nodes, a 
+\clj{:clojure.core.typed.analyzer/config} 
+entry (abbreviated \clj{::config}) was added to all nodes
+to attach data that applies to AST nodes even after they are expanded.
+For example, a top-level expression is still top-level after it is expanded.
+The implementations of \clj{unanalyzed} and \clj{analyze-outer}
+in \figref{fig:analyzer:config-inheritance} show their propagation---\clj{unanalyzed}
+initializes \clj{::config} on line 9, and \clj{analyze-outer} propagates it on line 16 after further analysis.
+
+\begin{figure}
+\lstset{numbers=left,xleftmargin=2em,framexleftmargin=1.5em}
+  \begin{lstlisting}[language=Clojure]
+(defn unanalyzed
+  "Create an unanalyzed AST node from form and env"
+  [form env]
+  {:op :unanalyzed
+   :form form
+   :env env
+   ;; ::config will be inherited by whatever node
+   ;; this :unanalyzed node becomes when analyzed
+   __red>::config<red__ {}})
+
+(defn analyze-outer
+  "If ast is :unanalyzed, call analyze-form on it, otherwise return ast"
+  [ast]
+  (case (:op ast)
+    :unanalyzed (__red>assoc<red__ (analyze-form (:form ast) (:env ast))
+                       __red>::config (::config ast)<red__)
+    ast))
+\end{lstlisting}
+  \caption{The initialization and propagation of \clj{::config} (relevant parts \textcolor{red}{highlighted})}
+  \label{fig:analyzer:config-inheritance}
+\end{figure}
+
+Finally, we revised to platform-agnostic parts of the \texttt{tools.analyzer} API
+to allow better performance.
+Symbol and namespace resolution are now platform-dependent, which allows us to 
+remove the global environment mirroring we identified as a performance issue
+at the beginning of this chapter.
+This added a slight burden to platform implementers of 
+\texttt{core.typed.analyzer}---the JVM support added a dozen lines of code, although
+it took several revisions and testing to recover the original behavior.
+
+%{
+%\begin{verbatim}
+%- Goals
+%  1. Build a better tools.analyzer
+%     - too slow
+%     - too many passes
+%     - reuse the passes/scheduler/analysis
+%       - and :unanalyzed
+%         - instead of analyzing children, store context and return
+%       - unforce one pass
+%  2. Extensibility
+%     - we want custom rules for syntax BEFORE expansion
+%     - avoid need for wrapper macros
+%       - avoid implementation-dependence
+%       - better error messages for users
+%     - but lose ability to check actual expansions
+%- (This is the Turnstile approach)
+%  - Except we don't have syntax objects, how to do it?
+%- Create a single-pass tools.analyzer variant that can be paused in
+%  the middle of analysis
+%  - `analyze` now expands absolute minimum (usually 1 macro)
+%- now `check` has access to the raw Clojure forms before they are expanded
+%  - much power = much responsibility
+%    - top-level evaluation side effects
+%    - expansion side effects
+%      - talk about that in a different chapter
+%    - must manually manage local scope
+%    - avoiding double macro expansion
+%    - avoiding double evaluation
+%    - double analysis is OK though, no side effects
+%      - so we can "reinsert" a fully analyzed AST back into
+%        a macro call so it can be expanded as usual.
+%        - eg. (my-macro (unexpanded))
+%            =>
+%              (my-macro ~(check (unexpanded) ...))
+%- Pros
+%  - now have access to original macro forms for higher-level reasoning
+%- Cons
+%  - no longer checking the implementation of macros
+%    - although were we ever, really?
+%      - wrapper macros are copied implementation details
+%  - must carefully manage compile-time side effects
+%\end{verbatim}
+%}
+
+
+
+\section{Extensibility in Interleaved checking}
+
+Now we present the most significant type system feature
+enabled by \texttt{core.typed.analyzer}: custom typing rules.
+We already hinted at how this support works in
+\figref{fig:analyzer:typed-analyzer-overview}---in this section
+we make that explicit with a small type system implementation.
+
+\begin{figure}
+\lstset{numbers=left,xleftmargin=2em,framexleftmargin=1.5em}
+\begin{lstlisting}[language=Clojure]
+(defn check
+  "Check an analyzed AST node has the expected type."
+  [expr expected]
+  (case (:op expr)
+    :if (let [ctest (check-expr (:test expr) (*@\emph{<omitted>}@*))](*@\label{analyzer:listing:typed:check-calls-check-expr}@*)
+          (*@\emph{<omitted>}@*))
+    :lambda (*@\emph{<omitted>}@*)
+    (*@\emph{<omitted other cases>}@*)))
+(defn check-expr(*@\label{analyzer:listing:typed:check-expr}@*)
+  "Check an AST node has the expected type."
+  [expr expected]
+  (if (= :unanalyzed (:op expr))
+    (case (*@\emph{<resolved-op-sym-for-expr>}@*)
+      __red>clojure.core/cond (check-special-cond expr expected)<red__(*@\label{analyzer:listing:typed:check-expr:special-cond}@*)
+      ; default case
+      (check-expr (analyze-outer expr) expected))
+    (run-post-passes
+      (check (run-pre-passes expr)(*@\label{analyzer:listing:typed:check-expr-calls-check}@*)
+             expected))))
+(defn check-form(*@\label{analyzer:listing:typed:check-form}@*)
+  "Check a Clojure expression has the expected type"
+  [form expected]
+  (check-expr (unanalyzed form (empty-env))
+              expected))
+\end{lstlisting}
+  \caption{The driver function \clj{check-form} for a type system using \texttt{core.typed.analyzer},
+  which dispatches to a special typing rule for an unexpanded \clj{cond} (\textcolor{red}{red}).}
+  \label{fig:analyzer:core.typed.analyzer-driver}
+\end{figure}
+
+We now present the sample type system in \figref{fig:analyzer:core.typed.analyzer-driver}.
+The main entry point is \clj{check-form} (line \ref{analyzer:listing:typed:check-form}),
+and we can check our running example has type \clj{expected}
+with:
+
+\begin{lstlisting}[language=Clojure]
+(check-form '(let [...] (cond ... (+ ...)))
+            expected)
+\end{lstlisting}
+
+A pair of mutually recursive helpers assist the main driver: \clj{check-expr} (line \ref{analyzer:listing:typed:check-expr})
+handles the analysis machinery along with unanalyzed forms,
+and \clj{check}
+which type checks an analyzed AST node.
+Once \clj{check-expr} has found a fully analyzed AST, it calls
+\clj{check} (line \ref{analyzer:listing:typed:check-expr-calls-check})
+in between running the analyzer passes.
+Correspondingly, any recursive checking of children performed in \clj{check}
+could trigger a special rule for unanalyzed forms, and so
+calls \clj{check-expr} (for example, checking \clj{:if}'s test on
+line \ref{analyzer:listing:typed:check-calls-check-expr}).
+
+Finally, custom typing rules are dispatched by \clj{check-expr}---we have included
+an example dispatch to a \clj{cond} rule on line \ref{analyzer:listing:typed:check-expr:special-cond}.
+The \clj{check-special-cond} function now has the ability
+to define a robust typing rule for \clj{cond}: it has full access to both
+the unexpanded \clj{cond} form and its hygienic type context.
+
+This is a far cry from what was possible with \clj{tools.analyzer},
+and so \clj{core.typed.analyzer} is a success in that light.
+However, with great power comes great responsibility:
+handing users
+the ability to control the order of analysis
+via custom typing rules
+requires careful planning in the face of compile-time side effects.
+The next chapter is dedicated to discussing this caveat.
+
+\chapter{Managing Analysis Side effects}
+
+To change Clojure's order-of-macroexpansion is to change the semantics
+of Clojure---in theory.
+This chapter will give an overview of Clojure's evaluation model
+so that the full implications of giving Typed Clojure users the responsibility
+to handle macroexpansion via custom typing rules becomes apparent.
+We also present how both \texttt{tools.analyzer} and \texttt{core.typed.analyzer}
+attempt to preserve these semantics.
+We will then compare our issues with those in other systems that allow
+typing rules.
+
+\section{Clojure's Evaluation Model}
+
+In this section, we describe the subtleties of evaluating Clojure code.
+To evaluate a string of Clojure code, it is first parsed (via \clj{read}) into
+a Clojure data representation and then macroexpanded until
+it consists of only language primitives.
+This is then compiled to JVM bytecode which is executed
+to produce the result of evaluation.
+Loading a file of Clojure code is mostly equivalent to
+evaluating each form in the file from top-to-bottom.
+
+A form is given a special status when considered
+\emph{top-level}: it will be completely evaluated
+before the next top-level form is expanded.
+Under evaluation, a form is considered top-level 
+unless it is nested under another form.
+For example, \clj{(query)} in \clj{(cond (query) ...)}
+is not considered top-level, and the entire \clj{cond} form
+is top-level (unless nested in a larger form).
+The exception to this rule is nesting under
+\clj{do} expressions:
+arguments of a top-level \clj{do} form inherits its top-level status.
+That is, in the top-level expression \clj{(do (def a ...) (def b ...))},
+\clj{a} will be completely defined before
+\clj{b} is expanded.
+This arrangement allows the expansion of one top-level form
+to depend on the evaluation (and thus expansion) of all preceding top-level forms.
+
+As described above, Clojure is always compiled (it has no interpreter).
+Clojure offers two modes of compilation: on-the-fly and ahead-of-time.
+The main distinction is that
+on-the-fly mode discards the generated bytecode after executing it, whereas ahead-of-time mode
+both executes and saves the bytecode (as JVM \texttt{.class} files) for later execution.
+This is different from other Lisps like Chez Scheme~\cite{dybvig2018chez} and
+Common Lisp~\cite{steele1990common},
+which has distinct semantics for 
+interpreted and compiled modes.
+In these languages, there is an implicit assumption that expressions are only
+compiled development machines,
+and so
+compilation mode in these languages skips
+the evaluation of certain expressions
+to avoid production-only side effects (e.g., initializing databases). Programmers must
+use \texttt{eval-when} to opt-in to different behavior.
+In contrast, Clojure evaluates all code during compilation (and Clojure is always compiled). Programmers
+rely on
+on Java-style \clj{main} methods (invoked from the command line) to trigger initialization steps only
+applicable in production.
+
+The most important consequence of Clojure's ahead-of-time compilation is that
+macros are expanded in a different environment than the program is executed in, and
+thus state is not necessarily preserved between them.
+This is a well-known problem in most Lisps like Chez Scheme and Common Lisp---to work around it,
+Steele~\cite{steele1990common} suggests the convention of moving compile-time
+side effects into the code that the macro expands to.
+This way, the side effects are evaluation-time, and thus always visible in
+every mode of compilation.
+Clojure also recommends this convention---without it,
+it is possible to have accidental dependencies on expansion
+side-effects that only cause bugs under ahead-of-time compilation (usually performed 
+only as the last step of software deployment).
+Racket's module system, on the other hand, avoids these latent bugs~\cite{flatt2002composable}
+by erasing compile-time state before evaluation.
+This emulates the conditions of ahead-of-time compilation in Racket's interpreted mode,
+at the cost of repeated module reinitializations.
+
+\section{Is order-of-expansion defined in Clojure?}
+
+Order of evaluation in Clojure is usually specified where it makes sense~\cite{CljEvalDoc}.
+For example, invocations \clj{(f arg*)} are evaluated left-to-right
+starting from \clj{f}, whereas the order of evaluation for elements of unordered set literals \clj{#\{k*\}}
+is undefined.
+On the other hand, the order of \emph{expansion} is not addressed at all in the Clojure
+documentation.
+It would be extremely convenient for the writers and users of Typed Clojure
+to avoid micromanaging the order of expansion, and would
+make writing custom typing rules and other Typed Clojure
+extensions more viable.
+With those biases in mind, we now attempt to give a balanced account
+of expansion order in Clojure.
+
+It is worth distinguishing between order of expansion
+of top-level forms and inner forms.
+Common Lisp asserts~\cite{steele1990common} that the order
+of macroexpansion for inner forms is unspecified.
+This gives flexibility not only to both platform implementors
+but also macro writers, because it grants macros the flexibility to
+expand their arguments, a pattern
+used by the Clojure core library \texttt{core.async}~\cite{CljCoreAsync}.
+This seems to work in practice for \texttt{core.async} users
+without any special instruction or warnings.
+Also, \texttt{core.async} was designed
+by the same team that develops Clojure itself,
+so it gives us more confidence that changing expansion order
+(by manually expanding a macro's arguments)
+is a sound choice.
+
+Even more reason to doubt the importance of expansion
+order is its seeming lack of preservation 
+across platforms for core macros.
+For instance,
+Clojure and ClojureScript share the same infrastructure for
+writing macros, but only share a subset of core macro \emph{definitions}.
+That is, some macros are redefined in ClojureScript to cater to the
+JavaScript host---furthermore, some functions in Clojure are turned into macros
+in ClojureScript.
+While the order of evaluation must be preserved
+for compatibility with Clojure,
+it seems unlikely that any special measures were taken to preserve
+expansion order of arguments---especially for more complicated,
+platform-specific macros.
+In practice, however, most macros probably do preserve expansion-order:
+idiomatic macros do not expand their arguments
+and merely forward them to more primitive operators
+(often \clj{do} or \clj{let}) that have
+more consistent expansions across platforms.
+This might be coincidental, since
+we are not aware of any special effort to force this style,
+and might more be a consequence of following general Clojure idioms.
+
+The popular general-purpose code analyzer \texttt{tools.analyzer} 
+ignores particular expansion-time side-effects, without any
+apparent downsides.
+Specifically, changes to the current namespace are ignored
+during macroexpansion. This is
+a common \emph{runtime} side-effect in Clojure, and is crucial for
+an analyzer to adhere to because analyzing a form in the
+wrong namespace is incorrect.
+Even so, we are not aware of any cases in practice in which this is a problem.
+Given that \texttt{tools.analyzer} is thoroughly tested and used
+in industry, it might then be reasonable to conclude that expansion-time side effects
+are rare. On the other hand, changing namespaces is a very specific side-effect
+whose conventions are perhaps not generalizable to other side-effects.
+Usually, changing namespaces is only triggered by the expansion of the \clj{ns} macro,
+and \clj{ns} is almost always used exactly once at the top of every Clojure file (to declare
+namespace dependencies). There could be other, more common expansion-time
+side-effects that are compatible with \texttt{tools.analyzer} that
+we are not aware of.
+
+Relatedly, to help measure the practicality of an alternative design of Typed Clojure
+that expands macros multiple times,
+we talked to Clojure and Racket developers about repeated macro expansions.
+One Clojure developer felt
+that avoiding repeated expansion was important in Clojure,
+but could not show an example of real-world code
+that would fail in these circumstances.
+In contrast, a Racket researcher was quick to demonstrate complex
+assumptions in their macros that would be violated in these
+conditions (for example, global counters for identifying specific expansions).
+
+Reflecting on these anecodes, Clojure developers routinely reload
+code (REPL's can take minutes to start and so encourage developers to leave
+them open for days)
+and so are guided to write code that can be re-evaluated
+in almost any order (after an initial load), encouraged further by the late-binding semantics
+of Clojure Vars.
+On the other hand, Racket's module system is much stricter and reinitializes
+entire modules in their own sandboxes. Racket programmers can (and do) rely
+on these restrictions to support complex top-level invariants.
+
+In both Clojure and Racket, it is idiomatic to avoid ``double expansions''
+when writing macros by binding intermediate results to names in a macro's
+expansion, usually
+for performance reasons.
+This also prevents double \emph{evaluation}, an even more serious performance concern
+since expressions are run many more times than they are
+expanded.
+The issue of a third party (like Typed Clojure) expanding macros
+multiple times is tangentially related to this idiom, since
+the cost of double expansions must be paid.
+The main difference, at least in the design we proposed,
+was that the extra expansions by the third party would eventually be discarded
+and not evaluated, thus avoiding the cost of double evaluation.
+
+It's interesting to note that the backgrounds and daily obligations of each groups varied significantly,
+with the Racket programmers being mostly from academia (studying language extensibility)
+and the Clojure developers mostly from industry.
+While these opinions about repeated expansions
+are useful to help contextualize our larger discussion of
+order-of-expansion for inner forms,
+there are important details to take into account
+before prematurely
+linking the two subjects.
+We must avoid using the fact that Clojure programmers
+reload expressions out-of-order as direct evidence 
+to support changing the expansion order of inner forms.
+This is because only \emph{top-level} expression are reloaded---intuitively,
+this does not change the expansion order of inner forms.
+We also note that reloading Clojure expressions can be notoriously
+buggy in certain circumstances, resulting in desynchronization
+between code on disk and code loaded into memory.
+Many disparate Clojure libraries and conventions have been developed to
+help manage these situations and there is no centralized solution.
+On the other hand, this problem is recognized and addressed by Racket's module system.
+We do not want Typed Clojure contributing yet another source of
+desynchronization, which is the main reason behind this extended discussion.
+
+%Given that information, combined with Clojure's strong Common Lisp heritage,
+%we think it is reasonable to assert that the order of expansion
+%(of inner forms) is also unspecified in Clojure.
+
+%Clojure tracks the current \emph{namespace} with the dynamic
+%variable \clj{*ns*}.
+
+%{
+%\begin{verbatim}
+%- introduce Clojure's evaluation model
+%  - `do` children treated as top-level
+%    - eg. (do e1 e2)
+%      - e1 is completely expanded+evaluated before e2 is expanded.
+%      - e2 can depend on evaluation-time side effects of e1
+%    - eg. (let [] (do e1 e2))
+%      - e1 is ONLY expanded before e2
+%      - e2 cannot depend on evaluation-time side effects of e1
+%- introduce *ns*, global thread-local variable that holds the current namespace
+%  - probably the most important evaluation-time side effect
+%    - changing namespaces
+%- introduce AOT-compilation
+%  - macroexpansions are performed upfront
+%    - so relying on expansion side-effects are uncommon and unreliable
+%- since checking & evaluation are interleaved, important that
+%  order-of-checking == order-of-evaluation
+%- but what about order-of-macroexpansion?
+%  - unaware of examples where order of macroexpansion side-effects are important
+%    outside of top-level forms
+%    - we have serious problems otherwise for any analysis tool
+%      - eg. (fn [] (change-ns-at-mexpansion-time) (relys-on-previous-macro-to-resolve))
+%        - this evaluates just fine in Clojure since there is
+%          no special handling of *ns* and things never pause and always just happen
+%          in order
+%        - but seems intractable for things like typing rules
+%          - custom typing rules must check forms in the order they are mexpanded!
+%            - seems very restrictive and error prone.
+%          - eg. ((fn [] ...) args ...)
+%            - imagine delaying checking a `fn` before its arguments.
+%              - but if args depend on fn body to expand, then we are forced
+%                to fully expand (ie. CHECK) the fn before checking the args.
+%                - very restrictive
+%- Relevant reading:
+%  - Flatt, "You want it, when?"
+%  - SamTH, Scheme 2007 (good for lispy background), PLDI 2011 (general audience)
+%- Chez
+%  - https://www.scheme.com/csug8/system.html#./system:s76
+%  - AOT compilation does not evaluate top-level forms by default
+%    - special cases for `define-syntax`
+%    - use eval-when for special cases where syntax depends on define's
+%      - eg. (eval-when (compile) (defn helper ..))
+%            (defmacro m ... (helper ...) ...)
+%  - Compared to Clojure:
+%    - AOT compilation in Clojure evaluates top-level forms
+%      - must be more careful with top-level evaluation side effects then,
+%        usually 
+%      - usually use -main function for side effects to start a program
+%- Common Lisp
+%  - http://filonenko-mikhail.github.io/cltl2-doc/enpdf/cltl2.pdf
+%  - section 5.3.3
+%    - top-level `progn` members are also top-level
+%    - order of macroexpansion (for inner forms) is unspecified
+%    - convention: top-level macros should side-effect during eval, not expand
+%\end{verbatim}
+%}
+
+\section{Preserving evaluation order during type checking}
+
+Now that we have discussed some details of Clojure's evaluation model,
+we demonstrate how to write a type checker that correctly preserves
+these semantics.
+Most of the details concern top-level expressions. In particular,
+a top-level \clj{do} gives top-level status to its arguments, and
+that top-level forms must be completely evaluated in order.
+
+The most interesting case to consider is a top-level \clj{(do e1 e2)} form,
+where the
+\emph{expansion} of \clj{e2}
+depends on the \emph{evaluation} of \clj{e1}.
+For example,
+
+{
+\lstset{numbers=left,xleftmargin=2em,framexleftmargin=1.5em}
+\begin{lstlisting}[language=Clojure]
+(do (defmacro mac [] 42)
+    (mac))
+\end{lstlisting}
+}
+
+defines the macro \clj{mac} and then uses it to expand
+the macro call on the the last line (the final result is \clj{42}).
+This will only execute correctly if top-level semantics of \clj{do} 
+are faithfully preserved.
+We will use this as a running example in our exploration of
+each analyzer.
+
+\subsection{\texttt{tools.analyzer}}
+
+\begin{figure}
+$$
+\begin{array}{r||l|l|l|l|}
+\text{Time} & \text{\clj{(do}}               & \text{\clj{(defmacro mac [] 42)}} & \text{\clj{(mac))}}\\
+\hline
+            & \text{\clj{analyze+eval}}^{>}  &                                                   & \\
+            & \textcolor{red}{\text{\clj{macroexpand-1}}^{*}} &                                  & \\
+            &                                & \text{\clj{analyze+eval}}^{>}                     & \\
+            &                                & \textcolor{red}{\text{\clj{macroexpand-1}}^{*}}   & \\
+            &                                & \text{\clj{analyze+passes}}                       & \\
+            &                                & \text{\clj{check}}                                & \\
+            &                                & \textcolor{red}{\text{\clj{eval}}}                & \\
+            &                                & \text{\clj{analyze+eval}}^{<}                     & \\
+            &                                & & \text{\clj{analyze+eval}}^{>}   \\
+            &                                & & \textcolor{red}{\text{\clj{macroexpand-1}}^{*}}    \\
+            &                                & & \text{\clj{analyze+passes}}     \\
+            &                                & & \text{\clj{check}}              \\
+            &                                & & \textcolor{red}{\text{\clj{eval}}}                 \\
+            &                                & & \text{\clj{analyze+eval}}^{<}   \\
+            & \text{\clj{analyze+eval}}^{<}  &                      \\
+\end{array}
+$$
+  \caption{Using \texttt{tools.analyzer}
+  to interleave evaluation of
+  top-level forms during the checking of \clj{(do (defmacro mac [] 42) (42))}.
+  }
+  \label{fig:analyzer:control-flow-pre-expand-side-effects}
+\end{figure}
+
+An \clj{analyze+eval} function handles top-level evaluation
+concerns in \texttt{tools.analyzer}, as 
+\figref{fig:analyzer:control-flow-pre-expand-side-effects}
+demonstrates with our
+running example.
+The type checker's main obligation is to provide a \clj{check}
+function that checks a completely analyzed AST before it is evaluated.
+When passed to \clj{analyze+eval}, it will only call \clj{check}
+on the smallest top-level forms by expanding macros until
+a non-\clj{do} expression is reached.
+
+There are several other details that must be handled
+that led us to write our own \clj{analyze+eval} variant for Typed Clojure---for
+example, expected type propagation and
+handling the \clj{do}-special-form protocol. We
+do not discuss those details here, and hope that
+the original implementation of \clj{analyze+eval} combined with the
+descriptions in this section should be sufficient to create other variants.
+
+\subsection{\texttt{core.typed.analyzer}}
+
+We have just described how to preserve evaluation order with \texttt{tools.analyzer}.
+The main distinction to keep in mind is that \texttt{tools.analyzer} controls
+analysis and checking for us, and so it handles its own internal bookkeeping 
+to keep track of top-level forms.
+On the other hand, this section describes the same problem with \texttt{core.typed.analyzer},
+which has comparatively very little control of when analysis is performed
+(since the provided \clj{analyze-outer} function only performs a single expansion).
+Some other party---in this case, the type checker---must incorporate analysis into its
+main loop.
+
+To handle this, \texttt{core.typed.analyzer} uses markers to
+distinguish between
+different kinds of top-level expressions.
+The first marker is performed by
+\clj{mark-top-level} 
+and is added to every kind of top-level expression.
+The second marker, \clj{mark-eval-top-level},
+further marks a top-level expression for evaluation.
+The \clj{eval-top-level} function 
+then evaluates AST nodes marked by \clj{mark-eval-top-level}
+(with other corner cases we will describe later).
+
+We use \figref{fig:analyzer:control-flow-incremental-side-effects}
+to demonstrate this communication with our running example.
+The entry point here is \clj{check-top-level} at time 0, which has been enhanced
+to handle top-level evaluation order.
+To set up the rest of checking,
+at time 2 the outer \clj{do} expression is marked with \clj{mark-top-level}.
+Then, once \clj{analyze-outer} determines the outer expression is a \clj{do},
+its children are then marked with \clj{mark-top-level} (times 4 and 5).
+
+For the \clj{defmacro} form, let us assume for simplicity that
+it expands to a non-\clj{do} expression.
+Under those circumstances, 
+once \clj{analyze-outer} at time 8 reaches a fixed point, the resulting AST node is marked
+for evaluation with \clj{mark-eval-top-level} at time 9.
+Then (after it has been checked) at time 14 \clj{eval-top-level} evaluates the \clj{defmacro}
+expression (because it was marked with \clj{mark-eval-top-level}).
+This repeats similarly for the final expression \clj{(mac)}.
+
+There are a few notable cases to where \clj{eval-top-level}
+does \emph{not} trigger evaluation.
+The common case where evaluation is skipped is when an AST node has no top-level markings,
+like during time 11 where the main checking loop
+should not recursively evaluate expressions.
+A less-obvious case is a node marked with \clj{mark-top-level},
+but \emph{not} \clj{mark-eval-top-level}.
+For example, the outer-most \clj{do} is only marked by
+\clj{mark-top-level} (time 2). Evaluation is then skipped at time 24 because
+the top-level markers have been passed along to its children
+(at times 4 and 5)
+and so they themselves
+have been evaluated
+(at times 14 and 21). If we evaluated at time 24,
+it would result in
+an incorrect double-evaluation of the \clj{defmacro} and \clj{(mac)} expressions---hence
+evaluation is skipped by \clj{eval-top-level} in this case.
+
+\begin{figure*}
+$$
+  \begin{array}{r||l|l|l|l|}
+    \text{T} & \text{\clj{(do}}                                   & \text{\clj{(defmacro mac [] 42)}} & \text{\clj{(mac))}}\\
+    \hline
+     0       & \text{\clj{check-top-level}}^{>}                   & &                     \\
+     1       & \text{\clj{unanalyzed}}                            & &\\
+     2       & \textcolor{red}{\text{\clj{mark-top-level}}}       & &\\
+     3       & \text{\clj{analyze-outer}}^{*}                     & &\\
+     4       &                                                    & \textcolor{red}{\text{\clj{mark-top-level}}}&\\
+     5       &                                                    & & \textcolor{red}{\text{\clj{mark-top-level}}}          \\
+     6       & \text{\clj{run-pre-passes}}^{>}                    & &\\
+     7       & \text{\clj{check}}^{>}                             & &\\
+     8       &                                                    & \text{\clj{analyze-outer}}^{*}    &                           \\
+     9       &                                                    & \textcolor{red}{\text{\clj{mark-eval-top-level}}}&\\
+     10      &                                                    & \text{\clj{run-pre-passes}}^{>}   &                           \\
+     11      &                                                    & \text{\clj{check}}^{>}            &                           \\
+     12      &                                                    & \text{\clj{run-post-passes}}^{<}  &                           \\
+     13      &                                                    & \text{\clj{check}}^{<}            &                           \\
+     14      &                                                    & \textcolor{red}{\text{\clj{eval-top-level}}}^{<}       & \\
+     15      &                                                    & & \text{\clj{analyze-outer}}^{*}                               \\
+     16      &                                                    & & \textcolor{red}{\text{\clj{mark-eval-top-level}}}          \\
+     17      &                                                    & & \text{\clj{run-pre-passes}}^{>}                              \\
+     18      &                                                    & & \text{\clj{check}}^{>}                                       \\
+     19      &                                                    & & \text{\clj{run-post-passes}}^{<}                             \\
+     20      &                                                    & & \text{\clj{check}}^{<}                                       \\
+     21      &                                                    & & \textcolor{red}{\text{\clj{eval-top-level}}}^{<}             \\
+     22      & \text{\clj{run-post-passes}}^{<}                   & &\\
+     23      & \text{\clj{check}}^{<}                             & &\\
+     24      & \textcolor{red}{\text{\clj{eval-top-level}}^{<}}   & &\\
+     25      & \text{\clj{check-top-level}}^{<}                   & &                     \\
+  \end{array}
+$$
+  \caption{Using \texttt{core.typed.analyzer}
+  to interleave checking with the evaluation of
+  top-level forms.}
+  \label{fig:analyzer:control-flow-incremental-side-effects}
+\end{figure*}
+
+Incorporating correct top-level evaluation into a \texttt{core.typed.analyzer}-based
+type checking loop is a mostly-straightforward extension, as demonstrated in
+  \figref{fig:analyzer:core.typed.analyzer-top-level-driver}.
+The main differences are highlighted.
+First, \clj{unanalyzed-top-level} combines
+\clj{unanalyzed}
+and
+\clj{mark-top-level} (times 1 and 2\ in our previous discussion).
+Then, \clj{eval-top-level} should be added as the final operation in
+the main checking loop.
+%
+Finally,
+the handling of unanalyzed nodes 
+(line \ref{analyzer:listing:cta-top-level-driver:unanalyzed-cases})
+must carefully manage markers to prevent double evaluations.
+In particular, \clj{eval-top-level}
+has a corner case to handle AST nodes that are not fully analyzed:
+nodes that are both \clj{:unanalyzed} and 
+are marked with \clj{mark-top-level} \emph{are} evaluated.
+The corresponding functions \clj{unmark-top-level}
+\clj{unmark-eval-top-level} can be used
+to undo the markers if these semantics are undesirable for particular
+situations.
+
+\begin{figure}
+\lstset{numbers=left,xleftmargin=2em,framexleftmargin=1.5em}
+\begin{lstlisting}[language=Clojure]
+(defn check-expr
+  "Check an AST node has the expected type."
+  [expr expected]
+  (if (= :unanalyzed (:op expr))
+    __red>...<red__ (*@\label{analyzer:listing:cta-top-level-driver:unanalyzed-cases}@*)
+    (__red>eval-top-level<red__
+      (run-post-passes
+        (check (run-pre-passes expr)
+               expected)))))
+(defn check-top-level [form expected]
+  (check-expr (__red>unanalyzed-top-level<red__ form (empty-env))
+              expected))
+\end{lstlisting}
+  \caption{Handling top-level forms in a checker based on \clj{core.typed.analyzer}}
+  \label{fig:analyzer:core.typed.analyzer-top-level-driver}
+\end{figure}
