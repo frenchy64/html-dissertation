@@ -4,7 +4,7 @@ all:
 html-fast:
 	make4ht -d html -um draft thesis.tex -c html-config.cfg
 
-html:
+html-all:
 	# svg generation https://tex.stackexchange.com/a/399458
 	make4ht -d html -um draft thesis.tex -c html-config.cfg
 	biber thesis
