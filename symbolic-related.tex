@@ -435,7 +435,7 @@ which we write in Clojure and refer to as \GRterm.
 %separate to preserve spacing
 
 Palsberg~\cite{Palsberg:1995:CAC:200994.201001}
-uses \GRterm to motivate program analyses
+uses \GRterm\ to motivate program analyses
 that answer basic questions like:
 \begin{itemize}
   \item For every application point, which abstractions can be applied?
@@ -444,9 +444,9 @@ that answer basic questions like:
 Symbolic closures answer neither of these questions.
 Instead, they provide answers relevant to checking and inferring types:
 \begin{itemize}
-  \item Can \GRterm accept an argument of type \ltiT{}?
+  \item Can \GRterm\ accept an argument of type \ltiT{}?
   \item When given an argument of type \ltiT{}, what type is the value returned by \GRterm?
-  \item Does \GRterm inhabit \ltiFn{\ltiT{}}{\ltiS{}}?
+  \item Does \GRterm\ inhabit \ltiFn{\ltiT{}}{\ltiS{}}?
 \end{itemize}
 
 To illustrate, we turn to
@@ -455,7 +455,7 @@ to explore \GRterm.
 It exposes the type checking query \clj{(tc p e)},
 which returns the type of checking \clj{e} at expected prototype \clj{p},
 where a prototype is a type that can contain ``wildcards'' \clj{?}.
-Now we can query the type of \GRterm as if it had a type.
+Now we can query the type of \GRterm\ as if it had a type.
 The caveat: without a rich enough prototype,
 a benign symbolic closure type may be provided as an answer---you only get out what you put in
 (for this reason, symbolic closures perform particularly well when top-level types are always provided).
@@ -499,32 +499,32 @@ Unsurprising, a symbolic closure type greets us (below).
 {
 \[
 \begin{array}{lll}
-\ltiClosure{\ltiEnv{}}{\text{\clj{(fn [y] ((y (x I)) (x K)))}}},
+\ltiClosure{\ltiEnv{}}{\cljmathdrop{(fn [y] ((y (x I)) (x K)))}},
               \text{ where }&
-{\ltiEnv{}} =  \ltiEnvConcat{\hastype{\text{\clj{I}}}{{\text{\clj{I}}}_c}}
-              {\ltiEnvConcat{\hastype{\text{\clj{K}}}{{\text{\clj{K}}}_c}}
-              {\ltiEnvConcat{\hastype{\text{\clj{D}}}{{\text{\clj{D}}}_c}}
-              {\ltiEnvConcat{\hastype{\text{\clj{x}}}{{\text{\clj{D}}}_c}}}}}\\&
-{\GRclosuretag{I}} = \ltiClosure{\ltiEnv{I}}{\text{\clj{I}}}\\&
-%{\GRclosuretag{K}} = \ltiClosure{\hastype{\text{\clj{I}}}{{\text{\clj{I}}}_c}}{\text{\clj{K}}}\\&
-{\GRclosuretag{K}} = \ltiClosure{\ltiEnv{k}}{\text{\clj{K}}}\\&
-%{\GRclosuretag{D}} = \ltiClosure{\ltiEnvConcat{\hastype{\text{\clj{I}}}{{\text{\clj{I}}}_c}}{\hastype{\text{\clj{K}}}{{\text{\clj{K}}}_c}}}
-%                                  {\text{\clj{D}}}
-{\GRclosuretag{D}} = \ltiClosure{\ltiEnv{D}}{\text{\clj{D}}}\\&
+{\ltiEnv{}} =  \ltiEnvConcat{\hastype{\cljmathdrop{I}}{{\cljmathdrop{I}}_c}}
+              {\ltiEnvConcat{\hastype{\cljmathdrop{K}}{{\cljmathdrop{K}}_c}}
+              {\ltiEnvConcat{\hastype{\cljmathdrop{D}}{{\cljmathdrop{D}}_c}}
+              {\ltiEnvConcat{\hastype{\cljmathdrop{x}}{{\cljmathdrop{D}}_c}}}}}\\&
+{\GRclosuretag{I}} = \ltiClosure{\ltiEnv{I}}{\cljmathdrop{I}}\\&
+%{\GRclosuretag{K}} = \ltiClosure{\hastype{\cljmathdrop{I}}{{\cljmathdrop{I}}_c}}{\cljmathdrop{K}}\\&
+{\GRclosuretag{K}} = \ltiClosure{\ltiEnv{k}}{\cljmathdrop{K}}\\&
+%{\GRclosuretag{D}} = \ltiClosure{\ltiEnvConcat{\hastype{\cljmathdrop{I}}{{\cljmathdrop{I}}_c}}{\hastype{\cljmathdrop{K}}{{\cljmathdrop{K}}_c}}}
+%                                  {\cljmathdrop{D}}
+{\GRclosuretag{D}} = \ltiClosure{\ltiEnv{D}}{\cljmathdrop{D}}\\&
 \end{array}
 \]
 }
 
-The term of \GRclosure is the (call-by-value) normal form of \GRterm, 
+The term of $\GRclosure$ is the (call-by-value) normal form of \GRterm, 
 derived by applying the symbolic closure of \clj{(fn [x] ...)} to  \clj{D}.
 The type environment
 \ltiEnv{} captures the type environment at the point the \clj{(fn [y] ...)} term
 was type checked.
 There, the bindings \clj{I}, \clj{K}, and \clj{D} are all symbolic closure types
-{\GRclosuretag{I}},
-{\GRclosuretag{K}}, and
-{\GRclosuretag{D}}, respectively,
-with \clj{x} also having type {\GRclosuretag{D}}
+$\GRclosuretag{I}$,
+$\GRclosuretag{K}$, and
+$\GRclosuretag{D}$, respectively,
+with \clj{x} also having type $\GRclosuretag{D}$
 as a result of the application.
 %Due to Clojure's left-to-right semantics for \clj{let} bindings, \clj{I} is also bound by
 %{\ltiEnv{k}} and {\ltiEnv{D}}, and 
@@ -532,12 +532,12 @@ as a result of the application.
 
 As explained in \secref{symbolic:section:formal-model}, two ways
 to query a symbolic closure are by applying it or using subtyping.
-We can experimentally discover what shape of argument \GRterm accepts 
+We can experimentally discover what shape of argument \GRterm\ accepts 
 by querying it at different prototypes, and using error messages and
-visual inspections of \GRterm and its normal form (calculated by \GRclosure) as guidance.
+visual inspections of \GRterm\ and its normal form (calculated by $\GRclosure$) as guidance.
 We started with the query \clj{(tc [Any -> ?] GR)}, which
 gives the error message \clj{Cannot invoke Any}.
-Then we inspected \GRclosure, and noticed \clj{y}
+Then we inspected $\GRclosure$, and noticed \clj{y}
 must have shape \clj{[? -> [? -> ?]]} based on its usage.
 Incorporating that information results in our first interesting query result.
 
@@ -548,10 +548,10 @@ Incorporating that information results in our first interesting query result.
 \end{lstlisting}
 
 This was calculated by observing a result type of \clj{Nothing}
-from the application of \GRclosure to an argument of type \clj{[Any -> [Any -> Nothing]]}
+from the application of $\GRclosure$ to an argument of type \clj{[Any -> [Any -> Nothing]]}
 (derived by minimizing/maximising wildcards 
 in covariant/contravariant positions, respectively, with respect to the relevant part of the prototype).
-We can find other interesting types \GRclosure inhabits by varying the query.
+We can find other interesting types $\GRclosure$ inhabits by varying the query.
 
 \begin{lstlisting}[language=Clojure]
 (tc [[? -> [? -> Int]] -> ?]
@@ -563,7 +563,7 @@ We can find other interesting types \GRclosure inhabits by varying the query.
 ;=> (All [a] [[Any -> [Any -> a]] -> a])
 \end{lstlisting}
 
-With the last query, we stumble on how to use \GRterm as a glorified identity function.
+With the last query, we stumble on how to use \GRterm\ as a glorified identity function.
 We can verify this by evaluating a few terms.
 
 \begin{lstlisting}[language=Clojure]
@@ -606,10 +606,10 @@ Function terms are labelled and
 arrow types are annotated with sets of labels which denote
 which functions it may represent.
 They demonstrate by analyzing the following term
-$(\l f. (\l x. f I)(f 0))I$
+$(\lambda f. (\lambda x. f I)(f 0))I$
 where $I$ represents the identity function.
 They label the term
-$(\l^1 f. (\l^2 x. f (\l^3 u. u))(f 0))(\l^4 v. v)$
+$(\lambda^1 f. (\lambda^2 x. f (\lambda^3 u. u))(f 0))(\lambda^4 v. v)$
 and infer overall type
 $t \xrightarrow[]{\{3\}} t$,
 which says values of this type originate from the lambda labeled $3$,
@@ -623,8 +623,8 @@ of lambda $3$, so it may
 be further checked later when more type information is available.
 For example, plugging this example into our prototype gives the
 following symbolic closure type (using their labelled lambda syntax)
-$\ltiClosure{\ltiEnv{}}{\l^3 u. u}$,
-where $\ltiEnv{} = \{f : \ltiClosure{\{\}}{\l^4 v. v}, x : \text{Int}\}$.
+$\ltiClosure{\ltiEnv{}}{\lambda^3 u. u}$,
+where $\ltiEnv{} = \{f : \ltiClosure{\{\}}{\lambda^4 v. v}, x : \text{Int}\}$.
 
 %\begin{lstlisting}[language=Clojure]
 %(tc ? ((fn [f] ((fn [x] (f (fn [u] u))) (f 0))) (fn [v] v)))
