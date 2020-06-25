@@ -318,23 +318,19 @@ correspond to the first \clj{Op} case
 of \figref{infer:fig:cljs}
 (lines \ref{infer:listing:cljs:Op:op:bindingStart}-\ref{infer:listing:cljs:Op:op:bindingEnd}).
 
-
-\begin{minipage}{\linewidth}%added minipage for dissertation
-\begin{cljlistingnumbered}
-  (defmulti op-multi-spec :op) ;dispatch on :op key
-  (defmethod op-multi-spec :binding ;match :binding
-    [_] ;s/keys matches keyword maps
-    (s/keys :req-un [::op ...] ;required keys
-            :opt-un [::column ...])) ;optional keys
-  (s/def ::op #{:js :let ...}) ;:op key maps to keywords
-  (s/def ::column int?) ;:column key maps to ints
-  ; register ::Op as union dispatching on :op entry
-  (s/def ::Op (s/multi-spec op-multi-spec :op))
-  ; emit's first argument :ast has spec ::Op
-  (s/fdef emit :args (s/cat :ast ::Op) :ret nil?)
-\end{cljlistingnumbered}
-\end{minipage}
-
+\begin{lstlisting}[language=Clojure, numbers=left]
+(defmulti op-multi-spec :op) ;dispatch on :op key
+(defmethod op-multi-spec :binding ;match :binding
+  [_] ;s/keys matches keyword maps
+  (s/keys :req-un [::op ...] ;required keys
+          :opt-un [::column ...])) ;optional keys
+(s/def ::op #{:js :let ...}) ;:op key maps to keywords
+(s/def ::column int?) ;:column key maps to ints
+; register ::Op as union dispatching on :op entry
+(s/def ::Op (s/multi-spec op-multi-spec :op))
+; emit's first argument :ast has spec ::Op
+(s/fdef emit :args (s/cat :ast ::Op) :ret nil?)
+\end{lstlisting}
 
 %However, there are several non-trivial details to manage.
 % specs have fundamental differences.
