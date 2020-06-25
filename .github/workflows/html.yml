@@ -8,4 +8,5 @@ jobs:
         with:
           run: |
             apk add make
+            make clean
             make html
