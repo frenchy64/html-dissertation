@@ -162,8 +162,11 @@
 \newmeta\resp{\ma{r'}}
 \newmeta\respp{\ma{r''}}
 \newcommand\emptyres[0]{\ma{\{\}}}
-\newcommand\resentry[2]{\ma{{#2}_{#1}}}
-%\newcommand\resentry[2]{\ma{#1 : #2}}
+% does not render well in html by tex4ht
+%\newcommand\resentry[2]{\ma{{#2}_{#1}}}
+% not math
+\newcommand\resentrynm[2]{#1 \ma{:} #2}
+\newcommand\resentry[2]{\ma{#1 : #2}}
 \newcommand\singletonres[2]{\ma{\{\resentry{#1}{#2}\}}}
 \newcommand\resflat[1]{\ma{\{#1\}}}
 \newcommand\resflatcolor[1]{\ma{\textcolor{red}{\resflat{#1}}}}

@@ -34,27 +34,25 @@ A path is represented as a vector of \emph{path elements},
 and describes the source of the value in question.
 For example, \clj{(track 3 ['nodes :rng])}
 returns \clj{3} and records the sample
-\resentry{\text{\clj{['nodes :rng]}}}{\text{\clj{Int}}}
+\resentrynm{\clj{['nodes :rng]}}{\clj{Int}}
 which says ``\clj{Int} was recorded at \clj{nodes}'s range.''
 %
 Running our test suite \clj{nodes-test} with an instrumented \clj{nodes}
 results in more samples like this, most which use the path element
 \clj{\{:key :kw\}} which represents a map lookup on the \clj{:kw} entry.
 
-\inferrule[]
-{}
-{
-\resentry{\cljmath{['nodes :dom \{:key :op\}]}}{\cljmath{':leaf}} \\
-\resentry{\cljmath{['nodes :dom \{:key :op\}]}}{\cljmath{':node}} \\
-\resentry{\cljmath{['nodes :dom \{:key :val\}]}}{\cljmath{?}} \\
-\resentry{\cljmath{['nodes :dom \{:key :left\}]}}{\cljmath{?}}\\
-\resentry{\cljmath{['nodes :dom \{:key :right\}]}}{\cljmath{?}}\\
-\resentry{\cljmath{['nodes :dom \{:key :left\} \{:key :op\}]}}{\cljmath{':leaf}}\\
-\resentry{\cljmath{['nodes :dom \{:key :right\} \{:key :op\}]}}{\cljmath{':leaf}}\\
-\resentry{\cljmath{['nodes :dom \{:key :left\} \{:key :val\}]}}{\cljmath{Int}}\\
-\resentry{\cljmath{['nodes :dom \{:key :right\} \{:key :val\}]}}{\cljmath{Int}}
-%\\ \resentry{\cljmath{['nodes :rng]}}{\cljmath{Int}}
-}
+\begin{itemize}
+  \item \resentrynm{\clj{['nodes :dom \{:key :op\}]}}{\clj{':leaf}}
+  \item \resentrynm{\clj{['nodes :dom \{:key :op\}]}}{\clj{':node}}
+  \item \resentrynm{\clj{['nodes :dom \{:key :val\}]}}{\clj{?}}
+  \item \resentrynm{\clj{['nodes :dom \{:key :left\}]}}{\clj{?}}
+  \item \resentrynm{\clj{['nodes :dom \{:key :right\}]}}{\clj{?}}
+  \item \resentrynm{\clj{['nodes :dom \{:key :left\} \{:key :op\}]}}{\clj{':leaf}}
+  \item \resentrynm{\clj{['nodes :dom \{:key :right\} \{:key :op\}]}}{\clj{':leaf}}
+  \item \resentrynm{\clj{['nodes :dom \{:key :left\} \{:key :val\}]}}{\clj{Int}}
+  \item \resentrynm{\clj{['nodes :dom \{:key :right\} \{:key :val\}]}}{\clj{Int}}
+  \item \resentrynm{\clj{['nodes :rng]}}{\clj{Int}}
+\end{itemize}
 
 Now, our task is to transform these samples into a readable and useful annotation.
 This is the function of the inference phase (formalized in \secref{infer:sec:formal:inference-phase}),
@@ -68,9 +66,14 @@ the \clj{?} placeholder represents incomplete information about a path
 (this process is formalized as \generatetenv{} in \figref{infer:fig:generatetenv}).
 
 \begin{lstlisting}[language=Clojure]
-(ann nodes [(U '{:op ':leaf, :val ?} '{:op ':node,
-                                       :left '{:op ':leaf, :val Int},
-                                       :right '{:op ':leaf, :val Int}}) -> Int])
+(ann nodes [(U '{:op ':leaf,
+                 :val ?}
+               '{:op ':node,
+                 :left '{:op ':leaf,
+                         :val Int},
+                 :right '{:op ':leaf,
+                          :val Int}})
+            -> Int])
 \end{lstlisting}
 
 Next, the two ``squashing'' phases.
@@ -87,7 +90,9 @@ In this example, the previous annotations become:
 (defalias op-leaf1 '{:op ':leaf, :val ?})
 (defalias op-leaf2 '{:op ':leaf, :val Int})
 (defalias op-leaf3 '{:op ':leaf, :val Int})
-(defalias op-node '{:op ':node, :left op-leaf2, :right op-leaf3})
+(defalias op-node '{:op ':node,
+                    :left op-leaf2,
+                    :right op-leaf3})
 (ann nodes [(U op-leaf1 op-node) -> Int])
 \end{lstlisting}
 
@@ -320,12 +325,10 @@ The following two samples demonstrate how to handle multiple arguments
 and higher-order functions
 (by nesting \clj{:dom} or \clj{:rng} path elements).
 
-\inferrule[]
-{}
-{
-\resentry{\cljmath{['visit-leaf \{:dom 1\} \{:key :op\}]}}{\cljmath{':leaf}}\\
-\resentry{\cljmath{['visit-leaf \{:dom 0\} \{:dom 0\} \{:key :op\}]}}{\cljmath{':leaf}}
-}
+\begin{itemize}
+  \item \resentrynm{\clj{['visit-leaf \{:dom 1\} \{:key :op\}]}}{\clj{':leaf}}
+  \item \resentrynm{\clj{['visit-leaf \{:dom 0\} \{:dom 0\} \{:key :op\}]}}{\clj{':leaf}}
+\end{itemize}
 
 Here is our automatically generated initial annotation.
 

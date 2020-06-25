@@ -35,26 +35,39 @@ favor compact annotations, and
 not overspecify types.
 
 \begin{figure}
-  % indented so line numbers can line up more tastefully
-\begin{cljlistingnumbered}
-  (defalias Op(*@\label{infer:listing:cljs:Op}@*) ; omitted some entries and 11 cases
-    (U (HMap :mandatory(*@\label{infer:listing:cljs:Op:op:bindingStart}@*)
-             {:op ':binding,(*@\label{infer:listing:cljs:Op:op:binding}@*) :info (U NameShadowMap(*@\label{infer:listing:cljs:Op:op:binding:NameShadowMap}@*) FnScopeFnSelfNameNsMap(*@\label{infer:listing:cljs:Op:op:binding:FnScopeFnSelfNameNsMap}@*)), ...}
-             :optional(*@\label{infer:listing:cljs:Op:optional}@*)
-             {:env ColumnLineContextMap, :init Op,(*@\label{infer:listing:cljs:Op:optional:init:Op}@*) :shadow (U nil Op),(*@\label{infer:listing:cljs:Op:optional:shadow:Op}@*) ...})(*@\label{infer:listing:cljs:Op:optionalEnd}@*)(*@\label{infer:listing:cljs:Op:op:bindingEnd}@*)
-      '{:op ':const,(*@\label{infer:listing:cljs:Op:op:const}@*) :env HMap49305,(*@\label{infer:listing:cljs:Op:op:const:HMap49305}@*) ...}
-      '{:op ':do,(*@\label{infer:listing:cljs:Op:op:do}@*) :env HMap49305,(*@\label{infer:listing:cljs:Op:op:do:HMap49305}@*) :ret Op,(*@\label{infer:listing:cljs:Op:op:do:Op}@*) :statements (Vec Nothing)(*@\label{infer:listing:cljs:Op:op:do:statements}@*), ...}
-      ...))(*@\label{infer:listing:cljs:Op-End}@*)
-  (defalias ColumnLineContextMap(*@\label{infer:listing:cljs:ColumnLineContextMap}@*)
-    (HMap :mandatory {:column Int, :line Int} :optional {:context ':expr}(*@\label{infer:listing:cljs:ColumnLineContextMap:optional}@*)))(*@\label{infer:listing:cljs:ColumnLineContextMapEnd}@*)
-  (defalias HMap49305 ; omitted some extries(*@\label{infer:listing:cljs:HMap49305}@*)
-    (U nil
-       '{:context ':statement, :column Int, ...}
-       '{:context ':return, :column Int, ...}
-       (HMap :mandatory {:context ':expr, :column Int, ...} :optional {...})))(*@\label{infer:listing:cljs:HMap49305End}@*)
-  (ann emit [Op -> nil])(*@\label{infer:listing:cljs:emit}@*)
-  (ann emit-dot [Op -> nil])(*@\label{infer:listing:cljs:emit-dot}@*)
-\end{cljlistingnumbered}
+\begin{lstlisting}[language=Clojure, numbers=left, numbersep=-8pt]
+(defalias Op(*@\label{infer:listing:cljs:Op}@*) ; omitted some entries and 11 cases
+  (U (HMap :mandatory(*@\label{infer:listing:cljs:Op:op:bindingStart}@*)
+           {:op ':binding,(*@\label{infer:listing:cljs:Op:op:binding}@*)
+            :info (U NameShadowMap(*@\label{infer:listing:cljs:Op:op:binding:NameShadowMap}@*)
+                     FnScopeFnSelfNameNsMap(*@\label{infer:listing:cljs:Op:op:binding:FnScopeFnSelfNameNsMap}@*)),
+            ...}
+           :optional(*@\label{infer:listing:cljs:Op:optional}@*)
+           {:env ColumnLineContextMap,
+            :init Op,(*@\label{infer:listing:cljs:Op:optional:init:Op}@*)
+            :shadow (U nil Op),(*@\label{infer:listing:cljs:Op:optional:shadow:Op}@*)
+            ...})(*@\label{infer:listing:cljs:Op:optionalEnd}@*)(*@\label{infer:listing:cljs:Op:op:bindingEnd}@*)
+    '{:op ':const,(*@\label{infer:listing:cljs:Op:op:const}@*)
+      :env HMap49305,(*@\label{infer:listing:cljs:Op:op:const:HMap49305}@*)
+      ...}
+    '{:op ':do,(*@\label{infer:listing:cljs:Op:op:do}@*)
+      :env HMap49305,(*@\label{infer:listing:cljs:Op:op:do:HMap49305}@*)
+      :ret Op,(*@\label{infer:listing:cljs:Op:op:do:Op}@*)
+      :statements (Vec Nothing)(*@\label{infer:listing:cljs:Op:op:do:statements}@*),
+      ...}
+    ...))(*@\label{infer:listing:cljs:Op-End}@*)
+(defalias ColumnLineContextMap(*@\label{infer:listing:cljs:ColumnLineContextMap}@*)
+  (HMap :mandatory {:column Int, :line Int}
+        :optional {:context ':expr}(*@\label{infer:listing:cljs:ColumnLineContextMap:optional}@*)))(*@\label{infer:listing:cljs:ColumnLineContextMapEnd}@*)
+(defalias HMap49305 ; omitted some extries(*@\label{infer:listing:cljs:HMap49305}@*)
+  (U nil
+     '{:context ':statement, :column Int, ...}
+     '{:context ':return, :column Int, ...}
+     (HMap :mandatory {:context ':expr, :column Int, ...}
+           :optional {...})))(*@\label{infer:listing:cljs:HMap49305End}@*)
+(ann emit [Op -> nil])(*@\label{infer:listing:cljs:emit}@*)
+(ann emit-dot [Op -> nil])(*@\label{infer:listing:cljs:emit-dot}@*)
+\end{lstlisting}
 \caption{Sample generated types for cljs.compiler.
 }
 \label{infer:fig:cljs}
@@ -482,20 +495,20 @@ The rest of the table enumerates the different kinds of changes needed
 and their frequency.
 
 \begin{figure*}
-\begin{tabular}{|r||c|c|c||c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}
-  Library       & \rotatebox{270}{Lines of code}
-                & \rotatebox{270}{Lines of Generated Global/Local Types}
-                & \rotatebox{270}{Lines manually added/removed}
-                & \rotatebox{270}{Casts/Instantiations}
-                & \rotatebox{270}{Polymorphic annotation}
-                & \rotatebox{270}{Local annotation}
-                & \rotatebox{270}{Type System Workaround/no-check}
-                & \rotatebox{270}{Overprecise argument/return type}
-                & \rotatebox{270}{Uncalled function (bad test coverage)}
-                & \rotatebox{270}{Variable-arity/keyword arg type}
-                & \rotatebox{270}{Add occurrence typing annotation}
-                & \rotatebox{270}{Erase or upcast HVec annotation}
-                & \rotatebox{270}{Add missing case in defalias}
+  \begin{tabular}{|r||p{1cm}|p{1cm}|p{1cm}||p{1cm}|p{1cm}|p{1cm}|p{1cm}|p{1cm}|p{1cm}|p{1cm}|p{1cm}|p{1cm}|p{1cm}|p{1cm}|p{1cm}|p{1cm}|p{1cm}|p{1cm}|}
+  Library       & Lines of code
+                & Lines of Generated Global / Local Types
+                & Lines manually added/removed
+                & Casts / Instantiations
+                & Polymorphic annotation
+                & Local annotation
+                & Type System Workaround/no-check
+                & Overprecise argument/return type
+                & Uncalled function (bad test coverage)
+                & Variable-arity/keyword arg type
+                & Add occurrence typing annotation
+                & Erase or upcast HVec annotation
+                & Add missing case in defalias
                 \\ 
   \hline
   \hline
