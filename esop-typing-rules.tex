@@ -1,0 +1,152 @@
+\begin{figure*}
+\begin{mathpar}
+
+  {\TLocal}
+
+{\TConst}
+
+{\TTrue}
+
+{\TFalse}
+
+{\TNil}
+
+{\TNum}
+
+{\TDo}
+
+{\TIf}
+
+{\TLet}
+                 
+{\TApp}
+
+{\TAbs}
+
+\infer [T-Clos]
+{ \exists {\propenv{}}. \satisfies{\openv{}}{\propenv{}}
+  \ \text{and}\ 
+\judgementrewrite {\propenv{}} {\abs {\x{}} {\ty{}} {\e{}}} {\s{}}
+                 {\filterset {\thenprop {\prop{}}}
+                             {\elseprop {\prop{}}}}
+                 {\object{}}
+                 {\abs {\x{}} {\ty{}} {\ep{}}}
+              }
+{ \judgementrewrite {}
+            {\closure {\openv{}} {\abs {\x{}} {\ty{}} {\e{}}}} 
+                      {\s{}}
+             {\filterset {\thenprop {\prop{}}}
+                         {\elseprop {\prop{}}}}
+             {\object{}}
+            {\closure {\openv{}} {\abs {\x{}} {\ty{}} {\ep{}}}}
+          }
+
+           {\TError}
+
+         {\TSubsume}
+\end{mathpar}
+\caption{Standard Typing Rules}
+\end{figure*}
+
+
+\begin{figure*}
+\begin{mathpar}
+
+{\TNew}
+
+{\TNewStatic}
+
+{\TField}
+
+{\TFieldStatic}
+
+{\TMethod}
+
+{\TMethodStatic}
+
+{\TClass}
+
+{\TInstance}
+\end{mathpar}
+\caption{Java Interop Typing Rules}
+\end{figure*}
+
+\begin{figure*}
+\begin{mathpar}
+
+  \TDefMulti{}
+
+  \TDefMethod{}
+
+\TIsA{}
+
+\infer [T-Multi]
+{ \judgementtworewrite {} {\val{}} {\ty{}} {\vp{}}
+  \\
+  \overrightarrow{\judgementtworewrite{}{\val{k}}{\Top}{\vp{k}}}
+  \\
+  \overrightarrow{\judgementtworewrite{}{\val{v}}{\s{}}{\vp{v}}}
+}
+{ \judgementrewrite {}
+  {\multi {\val{}} {\curlymapvaloverright{\val{k}}{\val{v}}}}
+                      {\MultiFntype {\s{}} {\ty{}}}
+             {\filterset {\topprop{}} {\botprop{}}}
+           {\emptyobject{}}
+  {\multi {\vp{}} {\curlymapvaloverright{\vp{k}}{\vp{v}}}}
+}
+
+\end{mathpar}
+\caption{Multimethod Typing Rules}
+\end{figure*}
+
+\begin{figure*}
+\begin{mathpar}
+
+%\infer [T-Get]
+%{ \judgementtwo {\propenv{}} {\hastype {\e{m}} {\Map {\ty{k}}{\ty{v}}}}
+%  \\
+%  \judgementtwo {\propenv{}} {\hastype {\e{k}} {\Top}}}
+%{ \judgement {\propenv{}} {\hastype {\getexp {\e{m}} {\e{k}}} {\Union{\ty{v}}{\nil{}}}}
+%             {\filterset {\topprop{}} {\topprop{}}}
+%           {\emptyobject{}}}
+%
+%\infer [T-Assoc]
+%{ 
+%  \judgementtwo {\propenv{}} {\hastype {\e{m}} {\Map{\ty{k}}{\ty{v}}}}
+%  \\
+%  \judgementtwo {\propenv{}} {\hastype {\e{k}} {\ty{k}}}
+%  \\
+%  \judgementtwo {\propenv{}} {\hastype {\e{v}} {\ty{v}}}
+%}
+%{ \judgement {\propenv{}} 
+%             {\hastype {\assocexp {\e{m}} {\e{k}} {\e{v}}} {\Map {\ty{k}}{\ty{v}}}}
+%             {\filterset {\topprop{}} {\botprop{}}}
+%             {\emptyobject{}}
+%}
+
+\infer [T-HMap]
+{ \overrightarrow{\judgementtworewrite {} {\val{k}}{\Value \kw{}}{\vp{k}}}\\
+  \overrightarrow{\judgementtworewrite {} {\val{v}}{\ty{v}}{\vp{v}}}\\
+  \mandatory{} = \mandatorysetoverright{\kw{}}{\ty{v}}
+}
+{ \judgementrewrite {}
+             {\curlymapvaloverright{\val{k}}{\val{v}}}
+                       {\HMapc {\mandatory{}}}
+             {\filterset {\topprop{}} {\botprop{}}}
+             {\emptyobject{}}
+             {\curlymapvaloverright{\vp{k}}{\vp{v}}}
+           }
+
+    {\TKw}
+
+    {\TGetHMap}
+
+    {\TGetAbsent}
+
+    {\TGetHMapPartialDefault}
+
+    {\TAssoc}
+
+\end{mathpar}
+\caption{Map Typing Rules}
+\end{figure*}

@@ -1,0 +1,122 @@
+\begin{figure}[h]
+$$
+\begin{altgrammar}
+  \expd{}, \e{} &::=& \x{}
+                      \alt \val{} 
+                      \alt {\comb {\e{}} {\e{}}} 
+                      \alt {\abs {\x{}} {\ty{}} {\e{}}}
+                      \alt {\ifexp {\e{}} {\e{}} {\e{}}}
+                      \alt {\doexp {\e{}} {\e{}}}
+                      \\
+                      &\alt& {\letexp {\x{}} {\e{}} {\e{}}}
+                      \alt {\wrongorerror{}}
+                      \alt {\ReflectiveExp{}}
+                      \alt {\NonReflectiveExp{}}
+                      \alt {\MultimethodExp{}}
+                      %\alt {\HintedExp{}}
+                      \alt {\HashMapExp{}}
+                &\mbox{Expressions} \\
+  \val{} &::=&          \singletonmeta{}
+                      \alt \classvaluemeta{}
+                      \alt {\emptymap{}}
+                      \alt {\const{}}
+                      \alt {\num{}}
+                      \alt {\str{}}
+                      \alt \mapval{}
+                      \alt {\closure {\openv{}} {\abs {\x{}} {\ty{}} {\e{}}}}
+                      \alt {\multi {\val{}} {\disptable{}}}
+                &\mbox{Values} \\
+  \mapval{} &::=&  {\curlymapvaloverright{\val{}}{\val{}}}
+                &\mbox{Map Values} \\
+                \constantssyntax{}\\
+%  \HintedExp{}             &::=& \typehintedexpsyntax{}
+%                &\mbox{Type Hinted Expressions} \\
+  \HashMapExp{}                &::=& \hmapexpressionsyntax{}
+                &\mbox{Hash Maps} \\
+  \NonReflectiveExp{}     &::=& \nonreflectiveexpsyntax{}
+                &\mbox{Non-Reflective %Java
+                       Interop} \\
+  \ReflectiveExp{}     &::=& \reflectiveexpsyntax{}
+                &\mbox{Reflective %Java
+                       Interop} \\
+  \MultimethodExp{}     &::=& \multimethodexpsyntax{}
+                &\mbox{%Immutable First-Class 
+                Multimethods}
+                      \\%\\ save space...
+  \s{}, \ty{}    &::=& \Top 
+                      \alt \class{}
+                      \alt {\Value \singletonmeta{}} 
+                      \alt {\Unionsplice {\overrightarrow{\ty{}}}}
+                      \alt
+                      {\ArrowOne {\x{}} {\ty{}}
+                                   {\ty{}}
+                                   {\filterset {\prop{}} {\prop{}}}
+                                   {\object{}}}
+                      \\
+                      &\alt& {\HMapgeneric {\mandatory{}} {\absent{}}}
+                      \alt {\MultiFntype{\ty{}}{\ty{}}}
+                      
+                &\mbox{Types} \\
+                \auxhmapsyntax{}\\
+  \singletonallsyntax{}
+                \\% \\ save space...
+                \openvsyntax{}\\\\
+
+                %\tatypesyntax{}\\\\
+
+  \occurrencetypingsyntax{}
+  %\pathelemsyntax{}\\
+  \propenvsyntax{}
+  \\\\
+
+ \disptablesyntax{} \\
+ %\typehintenvsyntax{} \\
+\classtableallsyntax{} \\
+               \classliteralallsyntax{}\\
+
+               \classvaluesyntaxentry{}\\
+                      \\
+  \wrongorerror{} &::=& \wrong{} \alt \errorvalv{}
+                &\mbox{Wrong or error}
+                      \\
+  \definedreduction{} &::=& \val{} \alt \wrongorerror{}
+                 &\mbox{Defined reductions}
+                 \\
+  \polaritymeta{} &::=& \pluspolarityliteral \alt \minuspolarityliteral
+                 &\mbox{Substitution Polarity}
+\end{altgrammar}
+$$
+\caption{Syntax of Terms, Types, Propositions, and Objects}
+\end{figure}
+
+\begin{figure}
+$$
+\begin{array}{lllr}
+  \Nil &\equiv& {\ValueNil}\\
+  \True &\equiv& {\ValueTrue}\\
+  \False &\equiv& {\ValueFalse}\\
+\end{array}
+$$
+\caption{Type abbreviations}
+\end{figure}
+
+\begin{figure}
+$$
+\begin{array}{lllr}
+  \judgementtwo{\propenv{}}{\e{}}{\ty{}} &\equiv& 
+  \judgement{\propenv{}}{\e{}}{\ty{}}{\filterset{\thenprop{\prop{}}}{\elseprop{\prop{}}}}{\object{}}
+  & \text{for some}\ {\thenprop{\prop{}}}, {\elseprop{\prop{}}} \text{and}\ {\object{}}
+
+  \\
+  {\replacefor{\ty{}}{\object{}}{\x{}}} &\equiv& {\pluspolarity{\replacefor{\ty{}}{\object{}}{\x{}}}}
+  \\
+  {\replacefor{\prop{}}{\object{}}{\x{}}} &\equiv&  {\pluspolarity{\replacefor{\prop{}}{\object{}}{\x{}}}}
+  \\
+  {\replacefor{\filterset{\prop{}}{\prop{}}}{\object{}}{\x{}}} &\equiv&  {\pluspolarity{\replacefor{\filterset{\prop{}}{\prop{}}}{\object{}}{\x{}}}}
+  \\
+  {\replacefor{\object{}}{\object{}}{\x{}}} &\equiv& {\pluspolarity{\replacefor{\object{}}{\object{}}{\x{}}}}
+
+\end{array}
+$$
+\caption{Judgment abbreviations}
+\end{figure}

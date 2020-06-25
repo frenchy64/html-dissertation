@@ -676,7 +676,7 @@
 \infer [T-Do]
 { 
   \judgementrewrite {\propenv{}} 
-             {\e1} {\t1}
+             {\e{1}} {\ty{1}}
              {\filterset {\thenprop {\prop{1}}} {\elseprop {\prop1}}} 
              {\object{1}}
              {\ep1}
@@ -689,7 +689,7 @@
   }
 { \judgementrewrite
     {\propenv{}} 
-    {\doexp {\e1} {\e{}}} {\ty{}}
+    {\doexp {\e{1}} {\e{}}} {\ty{}}
     {\filterset {\thenprop {\prop{}}} {\elseprop {\prop{}}}} {\object{}} 
     {\doexp {\ep1} {\ep{}}}
              }
@@ -697,7 +697,7 @@
 
 \newcommand\TIf[0]{
 \infer [T-If]
-{ \judgementrewrite {\propenv{}} {\e1} {\ty{1}} {\filterset {\thenprop {\prop{1}}} {\elseprop {\prop{1}}}}
+{ \judgementrewrite {\propenv{}} {\e{1}} {\ty{1}} {\filterset {\thenprop {\prop{1}}} {\elseprop {\prop{1}}}}
                  {\object{1}} 
                  {\ep1}
              \\\\
@@ -713,7 +713,7 @@
                  %\\\\
                  %\ep{} = {\ifexp {\ep1} {\ep2} {\ep3}}
              }
-{ \judgementrewrite {\propenv{}} {\ifexp {\e1} {\e2} {\e3}} {\ty{}}
+{ \judgementrewrite {\propenv{}} {\ifexp {\e{1}} {\e{2}} {\e{3}}} {\ty{}}
                  {\filterset {\thenprop {\prop{}}}
                              {\elseprop {\prop{}}}}
                  {\object{}} 
@@ -1308,7 +1308,7 @@
   \opsem {\openv{}} {\e{2}} {\val{}}
 }
 { \opsem {\openv{}}
-         {\ifexp {\e1} {\e2} {\e3}}
+         {\ifexp {\e{1}} {\e{2}} {\e{3}}}
          {\val{}}
        }
      }
@@ -1322,7 +1322,7 @@
   \opsem {\openv{}} {\e{3}} {\val{}}
 }
 { \opsem {\openv{}}
-         {\ifexp {\e1} {\e2} {\e3}}
+         {\ifexp {\e{1}} {\e{2}} {\e{3}}}
          {\val{}}
        }
      }
