@@ -4,14 +4,15 @@ secrets:
   - 4fb99124-4e5f-4427-8796-3ccc0d953621
 packages:
 - hut
+- make
+- texmf-dist
+- texlive
 sources:
   - git@git.sr.ht:~ambrosebs/html-dissertation
 environment:
   site: test-sh.ambrosebs.com
   repo: html-dissertation
 tasks:
-- dependencies: |
-    apk update && apk add texmf-dist texlive make
 - package: |
     cd $repo
     make clean
