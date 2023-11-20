@@ -32,3 +32,4 @@ thesis*.tmp
 *_latexmk
 *.fls
 *.bcf
+*.tar.gz
