@@ -3,16 +3,21 @@ oauth: pages.sr.ht/PAGES:RW
 secrets:
   - 4fb99124-4e5f-4427-8796-3ccc0d953621
 packages:
-- hut
+- go
 - make
 - texmf-dist
 - texlive-full
 sources:
   - git@git.sr.ht:~ambrosebs/html-dissertation
+  - https://git.sr.ht/~emersion/hut
 environment:
   site: test-sh.ambrosebs.com
   repo: html-dissertation
 tasks:
+- hut: |
+    cd hut
+    make
+    sudo make install
 - package: |
     cd $repo
     make clean
