@@ -6,7 +6,8 @@ packages:
 - hut
 - make
 - texmf-dist
-- texlive-full
+- texlive
+- texlive-luatex
 sources:
   - git@git.sr.ht:~ambrosebs/html-dissertation
 environment:
