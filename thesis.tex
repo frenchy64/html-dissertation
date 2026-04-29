@@ -14,6 +14,9 @@
 \usepackage{esop-common}
 \usepackage{infer-common}
 \usepackage{symb-common}
+% textcomp (loaded by esop-common) provides \textdollar;
+% declare \$ for T1 encoding to fix "Command \$ unavailable in encoding T1"
+\DeclareTextCommand{\$}{T1}{\textdollar}
 %\usepackage{quals-common}
 
 \usepackage{hyperref}

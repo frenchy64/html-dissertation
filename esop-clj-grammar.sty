@@ -1402,7 +1402,6 @@
      \newcommand\getmethodfigure[0]{
 $$
 \begin{array}{ll}
-
   \getmethod {\disptable{}}
              {\val{e}}
              {\val{v}}
@@ -1418,7 +1417,6 @@ $$
   \getmethoderr {\disptable{}}
              {\val{e}}
              {\mmerror{}} &\text{otherwise}
-
 \end{array}
 $$
      }
@@ -2470,7 +2468,6 @@ $$
 % constants syntax
 \newcommand\constantssyntax[0]{
   {\const{}}           &::=& \classconst{} \alt \numberhuh{}
-
                 &\mbox{Constants}
               }
 
@@ -2482,13 +2479,13 @@ $$
 % ClassPE
 \update{\ty{}}{\Value{\class{}}}{\destructpath{\pathelem{}}{\classpe{}}}
 &=& \update{\ty{}}{\class{}}{\pathelem{}}
-
+%
 % handles updating the else branch in (if (isa? (class x) C) ...), don't need it
 %\\
 %\update{\ty{}}{\nottype{\Value{\class{}}}}{\destructpath{\pathelem{}}{\classpe{}}}
 %&=& \update{\ty{}}{\nottype{\class{}}}{\pathelem{}}
 %& \text{if}\ \not\exists \classp{}.\ {\issubtypein{}{\classp{}}{\class{}}}\ \text{and}\ {\classp{}} \not= \class{}
-
+%
 % These 4 cases are fun but not necessary, handle using `class` to test for nullability
 %\\
 %\update{\ty{}}{\s{}}{\destructpath{\pathelem{}}{\classpe{}}}
@@ -2506,7 +2503,7 @@ $$
 %\update{\ty{}}{\nottype{\s{}}}{\destructpath{\pathelem{}}{\classpe{}}}
 %&=& \update{\ty{}}{\Object}{\pathelem{}}
 %& \text{if}\ \issubtypein{}{\Nil{}}{\s{}}
-
+%
 % What if \s{} is a union of class singletons?
 % this just seems wrong
 %\\
@@ -2516,12 +2513,12 @@ $$
 %\\
 %\update{\ty{}}{\nottype{\s{}}}{\classpe{}}
 %&=& \remove{\ty{}}{\s{}}
-
+%
 % Don't need base case covers \Top
 \\
 \update{\ty{}}{\propisnotmeta{}}{\destructpath {\pathelem{}} {\classpe{}}}
 &=& {\ty{}}
-
+%
 % keype
 \\
 \update{\HMapgeneric {\mandatory{}} {\absent{}}}{\propisnotmeta{}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
@@ -2530,13 +2527,13 @@ $$
 \\
 && \text{if}\ {\inmandatory{\kw{}}{\ty{}}{\mandatory{}}}
 %& Present Key
-
+%
 \\
 \update{\HMapgeneric {\mandatory{}} {\absent{}}}{\propisnotmeta{}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
 &=&
 {\Bottom{}}
 \ \ \text{if}\ {\notsubtypein {} {\Nil{}} {\propisnotmeta{}}}\ \text{and}\ {\inabsent{\kw{}}{\absent{}}}
-
+%
 % both these cases are summarised by the above, which uses negation subtyping
 %\\
 %\update{\HMapgeneric {\mandatory{}} {\absent{}}}{\ty{}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
@@ -2550,7 +2547,7 @@ $$
 %{\Bottom{}}
 %& \text{if}\ {\issubtypein {} {\Nil{}} {\ty{}}}\ \text{and}\ {\inabsent{\kw{}}{\absent{}}}
 %%& Bad absent -
-
+%
 % this rule doesn't do much, turned into default rule
 %\\
 %\update{\HMapgeneric {\mandatory{}} {\absent{}}}{\propisnotmeta{}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
@@ -2558,7 +2555,7 @@ $$
 %{\HMapgeneric {\mandatory{}} {\absent{}}}
 %& \text{if}\ {\inabsent{\kw{}}{\absent{}}}
 %%& Consistent absent
-
+%
 \\
 \update{\HMapp {\mandatory{}} {\absent{}}}{\ty{}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
 &=&
@@ -2576,7 +2573,7 @@ $$
 \\
 && 
 \text{if}\ {\notsubtypein {} {\Nil{}} {\propisnotmeta{}}},\ {\notinmandatory{\kw{}}{\s{}}{\mandatory{}}}\ \text{and}\ {\notinabsent{\kw{}}{\absent{}}}
-
+%
 %\\
 %\update{\HMapp {\mandatory{}} {\absent{}}}{\propisnotmeta{}}{\destructpath {\pathelem{}} {\keype{\kw{}}}}
 %&=&
@@ -2586,8 +2583,8 @@ $$
 &=&
 {\ty{}}
 %& Consistent absent
-
-
+%
+%
 \\
 \update{\ty{}}{\s{}}{\emptypath{}}
 &=&
@@ -2596,7 +2593,7 @@ $$
 \update{\ty{}}{\nottype{\s{}}}{\emptypath{}}
 &=&
 \remove{\ty{}}{\s{}}
-
+%
               }
 
 \newcommand\restrictfigure[0]{

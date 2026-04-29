@@ -55,25 +55,25 @@ $$
                       \\
                       &\alt& {\HMapgeneric {\mandatory{}} {\absent{}}}
                       \alt {\MultiFntype{\ty{}}{\ty{}}}
-                      
+%
                 &\mbox{Types} \\
                 \auxhmapsyntax{}\\
   \singletonallsyntax{}
                 \\% \\ save space...
                 \openvsyntax{}\\\\
-
+%
                 %\tatypesyntax{}\\\\
-
+%
   \occurrencetypingsyntax{}
   %\pathelemsyntax{}\\
   \propenvsyntax{}
   \\\\
-
+%
  \disptablesyntax{} \\
  %\typehintenvsyntax{} \\
 \classtableallsyntax{} \\
                \classliteralallsyntax{}\\
-
+%
                \classvaluesyntaxentry{}\\
                       \\
   \wrongorerror{} &::=& \wrong{} \alt \errorvalv{}
@@ -106,7 +106,7 @@ $$
   \judgementtwo{\propenv{}}{\e{}}{\ty{}} &\equiv& 
   \judgement{\propenv{}}{\e{}}{\ty{}}{\filterset{\thenprop{\prop{}}}{\elseprop{\prop{}}}}{\object{}}
   & \text{for some}\ {\thenprop{\prop{}}}, {\elseprop{\prop{}}} \text{and}\ {\object{}}
-
+%
   \\
   {\replacefor{\ty{}}{\object{}}{\x{}}} &\equiv& {\pluspolarity{\replacefor{\ty{}}{\object{}}{\x{}}}}
   \\
@@ -115,7 +115,7 @@ $$
   {\replacefor{\filterset{\prop{}}{\prop{}}}{\object{}}{\x{}}} &\equiv&  {\pluspolarity{\replacefor{\filterset{\prop{}}{\prop{}}}{\object{}}{\x{}}}}
   \\
   {\replacefor{\object{}}{\object{}}{\x{}}} &\equiv& {\pluspolarity{\replacefor{\object{}}{\object{}}{\x{}}}}
-
+%
 \end{array}
 $$
 \caption{Judgment abbreviations}
